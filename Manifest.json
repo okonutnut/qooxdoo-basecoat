@@ -1,5 +1,5 @@
 {
- "$schema": "https://qooxdoo.org/schema/Manifest-2-0-0.json",
+  "$schema": "https://qooxdoo.org/schema/Manifest-2-0-0.json",
   "info" :
   {
     "name" : "myTasks",
@@ -22,5 +22,9 @@
 
   "requires": {
     "@qooxdoo/framework": "^7.9.2"
-  }
+  }, 
+
+  "externalResources": [
+    "compiled.css"
+  ]
 }
