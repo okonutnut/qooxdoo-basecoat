@@ -41,21 +41,22 @@ qx.Class.define("myTasks.Application", {
         qx.log.appender.Console;
       }
 
-      const button = new myTasks.components.ui.Button(
-        "Click me",
-        "primary",
-        "lg",
-      );
-
       // Document is the application root
       const doc = this.getRoot();
 
-      // Add button to document at fixed coordinates
-      doc.add(button, { left: 100, top: 100, edge: 0 });
+      // Pages
+      const loginPage = new myTasks.pages.LoginPage();
+      const mainPage = new myTasks.pages.MainPage();
 
-      // Attach event listener
-      button.addListener("execute", () => {
-        alert("Button clicked!");
+      // Default page
+      doc.add(mainPage, { edge: 0 });
+
+      loginPage.addListener("changeLoggedIn", (e) => {
+        if (e.getData() == true) {
+          doc.removeAll();
+
+          doc.add(mainPage, { edge: 0 });
+        }
       });
     },
   },

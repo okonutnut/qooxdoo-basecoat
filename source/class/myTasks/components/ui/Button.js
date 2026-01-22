@@ -14,15 +14,17 @@ qx.Class.define("myTasks.components.ui.Button", {
     // generate Basecoat classes
     let classes = ["btn"];
     if (variant) classes.push(`btn-${variant}`);
-    if (size) classes.push(`btn-${size}`);
+          if (size) classes.push(`btn-${size}`);
 
     // embed HTML
     this._html = new qx.ui.embed.Html(`
-      <button class="${classes.join(" ")}">${label}</button>
+      <div style="margin: 4px;">
+        <button class="${classes.join(" ")}" style="width: 100%;">${label}</button>
+      </div>
     `);
 
     // add child with layout properties
-    this._add(this._html, { left: 0, top: 0 });
+    this._add(this._html, { edge: 0 });
 
     // hook DOM click
     this._html.addListenerOnce("appear", () => {
