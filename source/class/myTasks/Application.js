@@ -51,16 +51,22 @@ qx.Class.define("myTasks.Application", {
       // Window (Modal Overlay)
       const window = new myTasks.components.Window();
 
-      // Default page
-      doc.add(mainPage, { edge: 0 });
+      // Default page: show login first
+      doc.add(loginPage, { edge: 0 });
 
       // Listeners
       loginPage.addListener("changeLoggedIn", (e) => {
         if (e.getData() == true) {
           doc.removeAll();
-
           doc.add(mainPage, { edge: 0 });
         }
+      });
+
+      // When MainPage requests logout, show login page and reset state
+      mainPage.addListener("logout", () => {
+        doc.removeAll();
+        loginPage.setLoggedIn(false);
+        doc.add(loginPage, { edge: 0 });
       });
     },
   },

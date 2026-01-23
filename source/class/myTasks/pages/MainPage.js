@@ -8,8 +8,6 @@ qx.Class.define("myTasks.pages.MainPage", {
     this.setLayout(new qx.ui.layout.Canvas());
 
     // Pages
-    var loginPage = new myTasks.pages.LoginPage();
-
     var mainLayout = new qx.ui.container.Composite(new qx.ui.layout.VBox(10));
 
     // Header
@@ -59,13 +57,17 @@ qx.Class.define("myTasks.pages.MainPage", {
 
     // Listeners
     logoutButton.addListener("execute", function () {
-      this.getRoot().setCurrent(loginPage);
-    });
+      this.fireEvent("logout");
+    }, this);
 
     // Render
     mainLayout.add(header);
     mainLayout.add(tabView, { flex: 1 });
 
     this.add(mainLayout, { edge: 0 });
+  },
+
+  events: {
+    logout: "qx.event.type.Event",
   },
 });

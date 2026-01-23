@@ -62,6 +62,9 @@ qx.Class.define("myTasks.pages.LoginPage", {
 
       if (username != null && password !== null) {
         this.setLoggedIn(true);
+        usernameField.setValue("");
+        passwordField.setValue("");
+        messageLabel.setValue("");
       } else {
         this.setLoggedIn(false);
         messageLabel.setValue("Invalid username and password.");
