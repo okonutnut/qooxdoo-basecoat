@@ -52,7 +52,7 @@ qx.Class.define("myTasks.Application", {
       const window = new myTasks.components.Window();
 
       // Default page: show login first
-      doc.add(loginPage, { edge: 0 });
+      doc.add(mainPage, { edge: 0 });
 
       // Listeners
       loginPage.addListener("changeLoggedIn", (e) => {

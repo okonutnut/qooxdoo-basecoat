@@ -26,34 +26,73 @@ qx.Class.define("myTasks.pages.ToDoPage", {
     header.add(searchField);
 
     // Table
-    var tableData = [
-      ["do the dishes", "2024-12-01", "High"],
-      ["take out the trash", "2024-12-05", "Medium"],
-    ];
+    var tasks = myTasks.globals.Tasks.getInstance().getValue();
     var tableModel = new qx.ui.table.model.Simple();
     tableModel.setColumns(["Task", "Due Date", "Priority"]);
-    tableModel.setData(tableData);
-    var table = new qx.ui.table.Table(tableModel);
-  
+    tableModel.setData(tasks);
+    
+    var table = new myTasks.components.DataTable(tableModel);
+    
     // Window
     var window = new myTasks.components.Window("Task Details");
+    window.setLayout(new qx.ui.layout.Canvas());
 
-    // Listeners
-    addButton.addListener("execute", () => {
-      window.openCentered();
-    });
-
-    searchField.addListener("input", () => {
-      var filter = searchField.getValue().toLowerCase();
-      var filteredData = tableData.filter(row => row[0].toLowerCase().includes(filter));
-      tableModel.setData(filteredData);
-    });
-    
     // Render
     layout.add(header);
     layout.add(table, { flex: 1 });
-    
+
     this.add(layout, { edge: 0 });
+
+    // Listeners
+    addButton.addListener("execute", () => {
+      var addForm = new myTasks.components.form.TaskForm();
+      window.add(addForm, { edge: 0 });
+      
+      // Update table on task addition
+      addForm.addListener("changeIsAdded", () => {
+        var updatedTasks = myTasks.globals.Tasks.getInstance().getValue();
+        tableModel.setData(updatedTasks);
+        window.close();
+        window.removeAll();
+        console.log("Task Added");
+      }, this);
+      
+      window.openCentered();
+    }, this);
+
+    // Update form when a table row is clicked
+    table.addListener("cellTap", (e) => {
+      var row = e.getRow();
+      var model = table.getTableModel();
+      var taskName = model.getValue(0, row);
+      var dueDate = model.getValue(1, row);
+      var priority = model.getValue(2, row);
+            
+      // Create form with pre-filled data
+      var editForm = new myTasks.components.form.TaskForm(taskName, dueDate, priority, row);
+      window.removeAll();
+      window.add(editForm, { edge: 0 });
+      
+      // Update table on task modification
+      editForm.addListener("changeIsAdded", () => {
+        var updatedTasks = myTasks.globals.Tasks.getInstance().getValue();
+        tableModel.setData(updatedTasks);
+        window.close();
+        window.removeAll();
+      }, this);
+      
+      window.openCentered();
+    }, this);
+
+    // Search functionality
+    searchField.addListener("input", () => {
+      var filter = searchField.getValue().toLowerCase();
+      var tableData = myTasks.globals.Tasks.getInstance().getValue();
+      var filteredData = tableData.filter((row) =>
+        row[0].toLowerCase().includes(filter),
+      );
+      tableModel.setData(filteredData);
+    }, this);
   },
 
   properties: {},
