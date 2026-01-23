@@ -1,27 +1,32 @@
 qx.Class.define("myTasks.components.form.TaskForm", {
   extend: qx.ui.container.Composite,
 
-  construct: function (task, dueDate, priority, rowIndex) {
+  construct: function (task, dueDate, priority, status, rowIndex) {
     this.base(arguments);
 
     this.setLayout(new qx.ui.layout.Canvas());
 
-    var isAdd = !task && !dueDate && !priority && rowIndex === undefined;
+    var isAdd = !task && !dueDate && !priority && !status && rowIndex === undefined;
+    var isNotToDo = status === 1 || status === 2;
 
     var formLayout = new qx.ui.container.Composite(new qx.ui.layout.VBox(10));
 
     var taskLabel = new qx.ui.basic.Label("Task Name:");
     var taskField = new qx.ui.form.TextField();
     taskField.setValue(task || "");
+    taskField.setEnabled(!isNotToDo);
 
     var dueDateLabel = new qx.ui.basic.Label("Due Date:");
     var dueDateDateField = new qx.ui.form.DateField();
     var dueDateValue = dueDate ? new Date(dueDate) : null;
     dueDateDateField.setValue(dueDateValue);
+    dueDateDateField.setEnabled(!isNotToDo);
 
     var priorityLabel = new qx.ui.basic.Label("Priority:");
     var prioritySelectBox = new qx.ui.form.SelectBox();
     prioritySelectBox.setValue(priority || "");
+    prioritySelectBox.setEnabled(!isNotToDo);
+
     var lowPriority = new qx.ui.form.ListItem("Low");
     var mediumPriority = new qx.ui.form.ListItem("Medium");
     var highPriority = new qx.ui.form.ListItem("High");
@@ -31,18 +36,32 @@ qx.Class.define("myTasks.components.form.TaskForm", {
 
     var submitButton = new qx.ui.form.Button("Submit");
     var markAsInProgressButton = new qx.ui.form.Button("Mark as In Progress");
+    var markAsDoneButton = new qx.ui.form.Button("Mark as Done");
     var deleteButton = new qx.ui.form.Button("Delete");
-
+    
     formLayout.add(taskLabel);
     formLayout.add(taskField);
     formLayout.add(dueDateLabel);
     formLayout.add(dueDateDateField);
     formLayout.add(priorityLabel);
     formLayout.add(prioritySelectBox);
-    formLayout.add(submitButton);
     if (!isAdd) {
-        formLayout.add(markAsInProgressButton);
-        formLayout.add(deleteButton);
+        switch (status) {
+            case 0: {
+                formLayout.add(submitButton);
+                formLayout.add(markAsInProgressButton);
+                formLayout.add(deleteButton);
+                break;
+            }
+            case 1: {
+                formLayout.add(markAsDoneButton);
+                break;
+            }
+            default: {
+                formLayout.add(deleteButton);
+                break;
+            }
+        }
     }
 
     // Listeners
@@ -57,10 +76,10 @@ qx.Class.define("myTasks.components.form.TaskForm", {
           var oldTasks = myTasks.globals.Tasks.getInstance().getValue();
 
           if (isAdd) {
-            oldTasks.push([taskName, formattedDate, priority]);
+            oldTasks.push([taskName, formattedDate, priority, 0]);
           } else {
             if (rowIndex !== undefined) {
-              oldTasks[rowIndex] = [taskName, formattedDate, priority];
+              oldTasks[rowIndex] = [taskName, formattedDate, priority, oldTasks[rowIndex][3]];
             }
             myTasks.globals.Tasks.getInstance().setValue(oldTasks);
           }
@@ -85,6 +104,7 @@ qx.Class.define("myTasks.components.form.TaskForm", {
           oldTasks.splice(rowIndex, 1); 
             myTasks.globals.Tasks.getInstance().setValue(oldTasks);
             this.setIsAdded(true);
+            this.setIsAdded(false);
         }
       },
       this,
@@ -92,7 +112,10 @@ qx.Class.define("myTasks.components.form.TaskForm", {
 
     markAsInProgressButton.addListener("execute", () => {
         if (!isAdd && rowIndex !== undefined) {
-            
+            var tasks = myTasks.globals.Tasks.getInstance();
+            tasks.incrementStatus(rowIndex);
+            this.setIsAdded(true);
+            this.setIsAdded(false);
         }
     }, this)
 

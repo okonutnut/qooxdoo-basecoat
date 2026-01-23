@@ -1,4 +1,4 @@
-qx.Class.define("myTasks.pages.ToDoPage", {
+qx.Class.define("myTasks.pages.InProgressPage", {
   extend: qx.ui.container.Composite,
 
   construct() {
@@ -12,10 +12,6 @@ qx.Class.define("myTasks.pages.ToDoPage", {
     headerLayout.setAlignY("middle");
     var header = new qx.ui.container.Composite(headerLayout);
 
-    var addButton = new qx.ui.form.Button("Add Task");
-    // var addButton = new myTasks.components.ui.Button("Add Task", "primary", "sm");
-    header.add(addButton);
-
     var spacer = new qx.ui.core.Spacer();
     header.add(spacer, { flex: 1 });
 
@@ -27,7 +23,7 @@ qx.Class.define("myTasks.pages.ToDoPage", {
 
     // Table
     var tasks = myTasks.globals.Tasks.getInstance().getValue();
-    tasks = tasks.filter((task) => task[3] === 0);
+    tasks = tasks.filter((task) => task[3] === 1);
 
     var tableModel = new qx.ui.table.model.Simple();
     tableModel.setColumns(["Task", "Due Date", "Priority"]);
@@ -46,22 +42,6 @@ qx.Class.define("myTasks.pages.ToDoPage", {
     this.add(layout, { edge: 0 });
 
     // Listeners
-    addButton.addListener("execute", () => {
-      var addForm = new myTasks.components.form.TaskForm();
-      window.add(addForm, { edge: 0 });
-      
-      // Update table on task addition
-      addForm.addListener("changeIsAdded", () => {
-        var updatedTasks = myTasks.globals.Tasks.getInstance().getValue();
-        updatedTasks = updatedTasks.filter((task) => task[3] === 0);
-        tableModel.setData(updatedTasks);
-        window.close();
-        window.removeAll();
-      }, this);
-      
-      window.openCentered();
-    }, this);
-
     // Update form when a table row is clicked
     table.addListener("cellTap", (e) => {
       var row = e.getRow();
@@ -79,7 +59,7 @@ qx.Class.define("myTasks.pages.ToDoPage", {
       // Update table on task modification
       editForm.addListener("changeIsAdded", () => {
         var updatedTasks = myTasks.globals.Tasks.getInstance().getValue();
-        updatedTasks = updatedTasks.filter((task) => task[3] === 0);
+        updatedTasks = updatedTasks.filter((task) => task[3] === 1);
         tableModel.setData(updatedTasks);
         window.close();
         window.removeAll();

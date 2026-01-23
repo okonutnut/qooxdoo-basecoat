@@ -41,9 +41,15 @@ qx.Class.define("myTasks.pages.MainPage", {
     tabView.add(todoTab);
 
     var inProgressTab = new qx.ui.tabview.Page("In Progress");
+    var inProgressPage = new myTasks.pages.InProgressPage();
+    inProgressTab.setLayout(new qx.ui.layout.VBox(10));
+    inProgressTab.add(inProgressPage);
     tabView.add(inProgressTab);
 
     var doneTab = new qx.ui.tabview.Page("Done");
+    var donePage = new myTasks.pages.DonePage();
+    doneTab.setLayout(new qx.ui.layout.VBox(10));
+    doneTab.add(donePage);
     tabView.add(doneTab);
 
     // Justify tabs: make each tab button flex equally
