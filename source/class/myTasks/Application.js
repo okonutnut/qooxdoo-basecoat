@@ -48,9 +48,13 @@ qx.Class.define("myTasks.Application", {
       const loginPage = new myTasks.pages.LoginPage();
       const mainPage = new myTasks.pages.MainPage();
 
+      // Window (Modal Overlay)
+      const window = new myTasks.components.Window();
+
       // Default page
       doc.add(mainPage, { edge: 0 });
 
+      // Listeners
       loginPage.addListener("changeLoggedIn", (e) => {
         if (e.getData() == true) {
           doc.removeAll();

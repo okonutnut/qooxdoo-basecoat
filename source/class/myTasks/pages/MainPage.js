@@ -7,6 +7,9 @@ qx.Class.define("myTasks.pages.MainPage", {
     // Set the layout for the entire page
     this.setLayout(new qx.ui.layout.Canvas());
 
+    // Pages
+    var loginPage = new myTasks.pages.LoginPage();
+
     var mainLayout = new qx.ui.container.Composite(new qx.ui.layout.VBox(10));
 
     // Header
@@ -25,6 +28,10 @@ qx.Class.define("myTasks.pages.MainPage", {
 
     var spacer = new qx.ui.core.Widget();
     header.add(spacer, { flex: 1 }); // this will push items apart
+
+    var logoutButton = new qx.ui.form.Button("Logout");
+    // var logoutButton = new myTasks.components.ui.Button("Logout", "secondary", "sm");
+    header.add(logoutButton);
 
     // Tab View
     var tabView = new qx.ui.tabview.TabView();
@@ -48,6 +55,11 @@ qx.Class.define("myTasks.pages.MainPage", {
     tabBar.getChildren().forEach(function (button) {
       button.setAllowGrowX(true); // allow horizontal growth
       button.setWidth(null); // unset fixed width
+    });
+
+    // Listeners
+    logoutButton.addListener("execute", function () {
+      this.getRoot().setCurrent(loginPage);
     });
 
     // Render
