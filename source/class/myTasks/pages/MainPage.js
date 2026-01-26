@@ -11,9 +11,10 @@ qx.Class.define("myTasks.pages.MainPage", {
     var mainLayout = new qx.ui.container.Composite(new qx.ui.layout.VBox(10));
 
     // Header
-    var header = new qx.ui.container.Composite(new qx.ui.layout.HBox(10));
+    var header = new qx.ui.container.Composite(
+      new qx.ui.layout.HBox(10, "center"),
+    );
     header.setDecorator("main");
-    header.setAlignY("middle");
 
     var title = new qx.ui.basic.Label("My Tasks");
     title.setFont(
@@ -24,11 +25,31 @@ qx.Class.define("myTasks.pages.MainPage", {
     );
     header.add(title);
 
-    var spacer = new qx.ui.core.Widget();
-    header.add(spacer, { flex: 1 }); // this will push items apart
+    var spacer = new qx.ui.core.Spacer();
+    header.add(spacer, { flex: 1 });
+
+    var user = null;
+    try {
+      user = JSON.parse(localStorage.getItem("user"));
+    } catch (e) {}
+
+    var nameLabel = new qx.ui.basic.Label();
+    nameLabel.setFont(
+      new qx.bom.Font().set({
+        bold: true,
+        size: 16,
+      }),
+    );
+    nameLabel.setAlignY("middle");
+
+    // Set value immediately (important!)
+    if (user && user.name) {
+      nameLabel.setValue("Hello, " + user.name + "!");
+    }
+
+    header.add(nameLabel);
 
     var logoutButton = new qx.ui.form.Button("Logout");
-    // var logoutButton = new myTasks.components.ui.Button("Logout", "secondary", "sm");
     header.add(logoutButton);
 
     // Tab View
@@ -62,9 +83,32 @@ qx.Class.define("myTasks.pages.MainPage", {
     });
 
     // Listeners
-    logoutButton.addListener("execute", function () {
-      this.fireEvent("logout");
-    }, this);
+    this.addListenerOnce(
+      "appear",
+      function () {
+        if (!localStorage.getItem("token") || !localStorage.getItem("user")) {
+          this.fireEvent("logout");
+          return;
+        }
+
+        const user = JSON.parse(localStorage.getItem("user"));
+        if (user?.name) {
+          nameLabel.setValue("Hello, " + user.name + "!");
+        }
+      },
+      this,
+    );
+
+    logoutButton.addListener(
+      "execute",
+      function () {
+        nameLabel.setValue("");
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        this.fireEvent("logout");
+      },
+      this,
+    );
 
     // Render
     mainLayout.add(header);

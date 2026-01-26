@@ -22,21 +22,21 @@ qx.Class.define("myTasks.pages.ToDoPage", {
     header.add(spacer, { flex: 1 });
 
     var searchField = new qx.ui.form.TextField();
-    // var searchField = new myTasks.components.ui.TextField("Search Tasks...");
     searchField.setPlaceholder("Search Tasks...");
     searchField.setWidth(200);
     header.add(searchField);
 
-    // Table
-    var tasks = myTasks.globals.Tasks.getInstance().getValue();
-    tasks = tasks.filter((task) => task[3] === 0);
+    // DataTable
+    FetchData();
 
     var tableModel = new qx.ui.table.model.Simple();
-    tableModel.setColumns(["Task", "Due Date", "Priority"]);
-    tableModel.setData(tasks);
-    
+    tableModel.setColumns(
+      ["ID", "Task", "Due Date", "Priority", "Status"],
+      ["id", "name", "due_date", "priority_level", "status"],
+    );
+
     var table = new myTasks.components.DataTable(tableModel);
-    
+
     // Window
     var window = new myTasks.components.Window("Task Details");
     window.setLayout(new qx.ui.layout.Canvas());
@@ -47,65 +47,133 @@ qx.Class.define("myTasks.pages.ToDoPage", {
 
     this.add(layout, { edge: 0 });
 
-    // Listeners
-    addButton.addListener("execute", () => {
-      var addForm = new myTasks.components.form.TaskForm();
-      window.add(addForm, { edge: 0 });
-      
-      // Update table on task addition
-      addForm.addListener("changeIsAdded", () => {
-        var updatedTasks = myTasks.globals.Tasks.getInstance().getValue();
-        updatedTasks = updatedTasks.filter((task) => task[3] === 0);
-        tableModel.setData(updatedTasks);
-        window.close();
-        window.removeAll();
-      }, this);
-      
-      window.openCentered();
-    }, this);
+    // Functions
+    // GET
+    async function FetchData() {
+      try {
+        const response = await fetch("http://localhost:3000/tasks.php");
+        if (!response.ok) {
+          tableModel.setData([]);
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
 
-    // Refresh button listener
-    refreshButton.addListener("execute", () => {
-      var refreshedTasks = myTasks.globals.Tasks.getInstance().getValue();
-      refreshedTasks = refreshedTasks.filter((task) => task[3] === 0);
-      tableModel.setData(refreshedTasks);
-    }, this);
+        const data = await response.json();
+
+        // Filter TODO tasks
+        const todoTasks = data.filter((task) => task.status === 0);
+
+        // Map to table model format (include status)
+        const tableData = todoTasks.map((task) => [
+          task.id,
+          task.name,
+          task.due_date,
+          task.priority_level,
+          task.status,
+        ]);
+
+        tableModel.setData(tableData);
+
+        // Update global store
+        if (myTasks.globals.Tasks.getInstance) {
+          myTasks.globals.Tasks.getInstance().setValue(tableData);
+        }
+
+        return tableData;
+      } catch (error) {
+        console.error("Error fetching tasks:", error);
+        tableModel.setData([]);
+        return [];
+      }
+    }
+    FetchData();
+
+    // Listeners
+    addButton.addListener(
+      "execute",
+      () => {
+        var addForm = new myTasks.components.form.TaskForm();
+        window.add(addForm, { edge: 0 });
+
+        // Update table on task addition
+        addForm.addListener(
+          "changeIsAdded",
+          () => {
+            refreshButton.execute();
+            window.close();
+            window.removeAll();
+          },
+          this,
+        );
+
+        window.openCentered();
+      },
+      this,
+    );
 
     // Update form when a table row is clicked
-    table.addListener("cellTap", (e) => {
-      var row = e.getRow();
-      var model = table.getTableModel();
-      var taskName = model.getValue(0, row);
-      var dueDate = model.getValue(1, row);
-      var priority = model.getValue(2, row);
-      var status = model.getValue(3, row);
-            
-      // Create form with pre-filled data
-      var editForm = new myTasks.components.form.TaskForm(taskName, dueDate, priority, status, row);
-      window.removeAll();
-      window.add(editForm, { edge: 0 });
-      
-      // Update table on task modification
-      editForm.addListener("changeIsAdded", () => {
-        var updatedTasks = myTasks.globals.Tasks.getInstance().getValue();
-        updatedTasks = updatedTasks.filter((task) => task[3] === 0);
-        tableModel.setData(updatedTasks);
-        window.close();
-        window.removeAll();
-      }, this);
-      
-      window.openCentered();
-    }, this);
+    table.addListener(
+      "cellTap",
+      (e) => {
+        var row = e.getRow();
+        var model = table.getTableModel();
 
-    // Search functionality
-    searchField.addListener("input", () => {
-      var filter = searchField.getValue().toLowerCase();
-      var tableData = myTasks.globals.Tasks.getInstance().getValue();
-      var filteredData = tableData.filter((row) =>
-        row[0].toLowerCase().includes(filter),
-      );
-      tableModel.setData(filteredData);
-    }, this);
+        var id = model.getValue(0, row);
+        var taskName = model.getValue(1, row);
+        var dueDate = model.getValue(2, row);
+        var priority = model.getValue(3, row);
+        var status = model.getValue(4, row); // status is now included
+
+        // Create form with pre-filled data
+        var editForm = new myTasks.components.form.TaskForm(
+          taskName,
+          dueDate,
+          priority,
+          status,
+          id,
+        );
+        window.removeAll();
+        window.add(editForm, { edge: 0 });
+
+        // Update table on task modification
+        editForm.addListener(
+          "changeIsAdded",
+          () => {
+            refreshButton.execute();
+            window.close();
+            window.removeAll();
+          },
+          this,
+        );
+
+        window.openCentered();
+      },
+      this,
+    );
+
+    // Refresh
+    refreshButton.addListener(
+      "execute",
+      async () => {
+        await FetchData(); // await ensures the table is updated after fetch
+      },
+      this,
+    );
+
+    // Search
+    searchField.addListener(
+      "input",
+      async () => {
+        const filter = searchField.getValue().toLowerCase();
+        const allTasks = await FetchData(); // get current data
+
+        const filteredData = allTasks.filter((task) =>
+          task[1].toLowerCase().includes(filter),
+        );
+
+        tableModel.setData(filteredData);
+      },
+      this,
+    );
   },
 
   properties: {},

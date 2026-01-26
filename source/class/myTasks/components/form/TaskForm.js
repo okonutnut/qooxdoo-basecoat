@@ -6,7 +6,8 @@ qx.Class.define("myTasks.components.form.TaskForm", {
 
     this.setLayout(new qx.ui.layout.Canvas());
 
-    var isAdd = !task && !dueDate && !priority && !status && rowIndex === undefined;
+    var isAdd =
+      !task && !dueDate && !priority && !status && rowIndex === undefined;
     var isNotToDo = status === 1 || status === 2;
 
     var formLayout = new qx.ui.container.Composite(new qx.ui.layout.VBox(10));
@@ -38,7 +39,10 @@ qx.Class.define("myTasks.components.form.TaskForm", {
     var markAsInProgressButton = new qx.ui.form.Button("Mark as In Progress");
     var markAsDoneButton = new qx.ui.form.Button("Mark as Done");
     var deleteButton = new qx.ui.form.Button("Delete");
-    
+    deleteButton.set({
+      backgroundColor: "#ff4d4d",
+    })
+
     formLayout.add(taskLabel);
     formLayout.add(taskField);
     formLayout.add(dueDateLabel);
@@ -48,42 +52,39 @@ qx.Class.define("myTasks.components.form.TaskForm", {
     if (isAdd) {
       formLayout.add(submitButton);
     } else {
-      formLayout.add(deleteButton);
       if (status === 0) {
-      formLayout.add(submitButton);
-      formLayout.add(markAsInProgressButton);
+        formLayout.add(submitButton);
+        formLayout.add(markAsInProgressButton);
       } else if (status === 1) {
-      formLayout.add(markAsDoneButton);
+        formLayout.add(markAsDoneButton);
       }
+      formLayout.add(deleteButton);
     }
 
     // Listeners
     submitButton.addListener(
       "execute",
       () => {
+        var user_id = JSON.parse(localStorage.getItem("user")).id;
         var taskName = taskField.getValue();
         var dueDate = dueDateDateField.getValue();
         var priority = prioritySelectBox.getSelection()[0].getLabel();
         if (taskName && dueDate && priority) {
-          var formattedDate = qx.util.format.DateFormat.getDateInstance().format(dueDate);
-          var oldTasks = myTasks.globals.Tasks.getInstance().getValue();
-
-          if (isAdd) {
-            oldTasks.push([taskName, formattedDate, priority, 0]);
+          var payload = {
+            code: "",
+            name: taskName,
+            due_date: dueDate.toISOString().split("T")[0],
+            priority_level: priority,
+            status: status || 0,
+            user_id: user_id,
+          };
+          if (rowIndex !== undefined) {
+            // Update existing task
+            UpdateTask.call(this, rowIndex, payload);
           } else {
-            if (rowIndex !== undefined) {
-              oldTasks[rowIndex] = [taskName, formattedDate, priority, oldTasks[rowIndex][3]];
-            }
-            myTasks.globals.Tasks.getInstance().setValue(oldTasks);
+            // Create new task
+            CreateTask.call(this, payload);
           }
-          this.setIsAdded(true);
-
-          // Clear fields after adding
-          taskField.setValue("");
-          dueDateDateField.setValue(null);
-          prioritySelectBox.setSelection([]);
-
-          this.setIsAdded(false);
         }
       },
       this,
@@ -93,26 +94,119 @@ qx.Class.define("myTasks.components.form.TaskForm", {
       "execute",
       () => {
         if (!isAdd && rowIndex !== undefined) {
-          var oldTasks = myTasks.globals.Tasks.getInstance().getValue();
-          oldTasks.splice(rowIndex, 1); 
-            myTasks.globals.Tasks.getInstance().setValue(oldTasks);
-            this.setIsAdded(true);
-            this.setIsAdded(false);
+          DeleteTask.call(this, rowIndex);
         }
       },
       this,
     );
 
-    const updateStatus = () => {
+    // Mark as In Progress
+    markAsInProgressButton.addListener("execute", async () => {
       if (!isAdd && rowIndex !== undefined) {
-        myTasks.globals.Tasks.getInstance().incrementStatus(rowIndex);
-        this.setIsAdded(true);
-        this.setIsAdded(false);
+        await UpdateTaskStatus(rowIndex, 1); // 1 = In Progress
+      }
+    }, this);
+
+    // Mark as Done
+    markAsDoneButton.addListener("execute", async () => {
+      if (!isAdd && rowIndex !== undefined) {
+        await UpdateTaskStatus(rowIndex, 2); // 2 = Done
+      }
+    }, this);
+
+    const UpdateTaskStatus = async (id, newStatus) => {
+      try {
+        const response = await fetch(`http://localhost:3000/tasks.php?id=${id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ status: newStatus }),
+        });
+        if (!response.ok) {
+          console.error("Failed to update status");
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        if (response.ok) {
+          this.setIsAdded(true);
+          this.setIsAdded(false);
+        }
+      } catch (error) {
+        console.error("Error updating status:", error);
       }
     };
 
-    markAsInProgressButton.addListener("execute", updateStatus, this);
-    markAsDoneButton.addListener("execute", updateStatus, this);
+    async function CreateTask(task) {
+      try {
+        const response = await fetch("http://localhost:3000/tasks.php", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(task),
+        });
+        if (!response.ok) {
+          console.error("Failed to create task");
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        if (response.ok) {
+          this.setIsAdded(true);
+          taskField.setValue("");
+          dueDateDateField.setValue(null);
+          prioritySelectBox.setSelection([]);
+
+          this.setIsAdded(false);
+        }
+      } catch (error) {
+        console.error("Error creating task:", error);
+      }
+    }
+
+    async function UpdateTask(id, task) {
+      try {
+        const response = await fetch(
+          `http://localhost:3000/tasks.php?id=${id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(task),
+          },
+        );
+        if (!response.ok) {
+          console.error("Failed to update task");
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        if (response.ok) {
+          this.setIsAdded(true);
+          this.setIsAdded(false);
+        }
+      } catch (error) {
+        console.error("Error updating task:", error);
+      }
+    }
+
+    // Delete function
+    async function DeleteTask(id) {
+      try {
+        const response = await fetch(`http://localhost:3000/tasks.php?id=${id}`, {
+          method: "DELETE",
+        });
+        if (!response.ok) {
+          console.error("Failed to delete task");
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        if (response.ok) {
+          this.setIsAdded(true);
+          this.setIsAdded(false);
+        }
+      } catch (error) {
+        console.error("Error deleting task:", error);
+      }
+    }
 
     this.add(formLayout, { edge: 0 });
   },

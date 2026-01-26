@@ -13,9 +13,8 @@ qx.Class.define("myTasks.components.DataTable", {
 
     // Column widths
     var columnModel = this.getTableColumnModel();
-    columnModel.setColumnWidth(0, 350);
-    columnModel.setColumnWidth(1, 150);
-    columnModel.setColumnWidth(2, 150);
+    columnModel.setColumnWidth(0, 50);
+    columnModel.setColumnWidth(1, 350);
     
     this.addListener("cellTap", function (e) {
       var row = e.getRow();

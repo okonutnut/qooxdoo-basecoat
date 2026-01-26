@@ -55,20 +55,52 @@ qx.Class.define("myTasks.pages.LoginPage", {
     // Render
     this._add(formContainer, { left: "50%", top: "50%" });
 
+    // Functions
+    async function loginFunction(username, password) {
+      try {
+        const response = await fetch("http://localhost:3000/login.php", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ username, password }),
+        });
+
+        if (!response.ok) {
+          messageLabel.setValue("Login failed. Please try again.");
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const result = await response.json();
+
+        if (result.user) {
+          this.setLoggedIn(true);
+          localStorage.setItem("token", result.token);
+          localStorage.setItem("user", JSON.stringify(result.user));
+          
+          usernameField.setValue("");
+          passwordField.setValue("");
+          messageLabel.setValue("");
+        } else if (result.error) {
+          messageLabel.setValue(result.error);
+        } else {
+          messageLabel.setValue("Invalid username or password.");
+        }
+      } catch (error) {
+        messageLabel.setValue("Login failed. Please try again.");
+        console.error("Login error:", error);
+      }
+    }
     // Listeners
+    this.addListenerOnce("appear", function () {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+    }, this)
+
     loginButton.addListener("execute", () => {
       const username = usernameField.getValue();
       const password = passwordField.getValue();
 
-      if (username != null && password !== null) {
-        this.setLoggedIn(true);
-        usernameField.setValue("");
-        passwordField.setValue("");
-        messageLabel.setValue("");
-      } else {
-        this.setLoggedIn(false);
-        messageLabel.setValue("Invalid username and password.");
-      }
+      loginFunction.call(this,username, password);
     });
 
     formContainer.addListenerOnce(
