@@ -12,6 +12,9 @@ qx.Class.define("myTasks.pages.DonePage", {
     headerLayout.setAlignY("middle");
     var header = new qx.ui.container.Composite(headerLayout);
 
+    var refreshButton = new qx.ui.form.Button("Refresh");
+    header.add(refreshButton);
+
     var spacer = new qx.ui.core.Spacer();
     header.add(spacer, { flex: 1 });
 
@@ -66,6 +69,13 @@ qx.Class.define("myTasks.pages.DonePage", {
       }, this);
       
       window.openCentered();
+    }, this);
+
+    // Refresh button listener
+    refreshButton.addListener("execute", () => {
+      var refreshedTasks = myTasks.globals.Tasks.getInstance().getValue();
+      refreshedTasks = refreshedTasks.filter((task) => task[3] === 2);
+      tableModel.setData(refreshedTasks);
     }, this);
 
     // Search functionality

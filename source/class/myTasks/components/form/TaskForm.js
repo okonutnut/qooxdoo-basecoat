@@ -45,23 +45,16 @@ qx.Class.define("myTasks.components.form.TaskForm", {
     formLayout.add(dueDateDateField);
     formLayout.add(priorityLabel);
     formLayout.add(prioritySelectBox);
-    if (!isAdd) {
-        switch (status) {
-            case 0: {
-                formLayout.add(submitButton);
-                formLayout.add(markAsInProgressButton);
-                formLayout.add(deleteButton);
-                break;
-            }
-            case 1: {
-                formLayout.add(markAsDoneButton);
-                break;
-            }
-            default: {
-                formLayout.add(deleteButton);
-                break;
-            }
-        }
+    if (isAdd) {
+      formLayout.add(submitButton);
+    } else {
+      formLayout.add(deleteButton);
+      if (status === 0) {
+      formLayout.add(submitButton);
+      formLayout.add(markAsInProgressButton);
+      } else if (status === 1) {
+      formLayout.add(markAsDoneButton);
+      }
     }
 
     // Listeners
@@ -110,14 +103,16 @@ qx.Class.define("myTasks.components.form.TaskForm", {
       this,
     );
 
-    markAsInProgressButton.addListener("execute", () => {
-        if (!isAdd && rowIndex !== undefined) {
-            var tasks = myTasks.globals.Tasks.getInstance();
-            tasks.incrementStatus(rowIndex);
-            this.setIsAdded(true);
-            this.setIsAdded(false);
-        }
-    }, this)
+    const updateStatus = () => {
+      if (!isAdd && rowIndex !== undefined) {
+        myTasks.globals.Tasks.getInstance().incrementStatus(rowIndex);
+        this.setIsAdded(true);
+        this.setIsAdded(false);
+      }
+    };
+
+    markAsInProgressButton.addListener("execute", updateStatus, this);
+    markAsDoneButton.addListener("execute", updateStatus, this);
 
     this.add(formLayout, { edge: 0 });
   },

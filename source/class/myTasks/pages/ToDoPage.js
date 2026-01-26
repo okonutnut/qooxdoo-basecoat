@@ -13,8 +13,10 @@ qx.Class.define("myTasks.pages.ToDoPage", {
     var header = new qx.ui.container.Composite(headerLayout);
 
     var addButton = new qx.ui.form.Button("Add Task");
-    // var addButton = new myTasks.components.ui.Button("Add Task", "primary", "sm");
     header.add(addButton);
+
+    var refreshButton = new qx.ui.form.Button("Refresh");
+    header.add(refreshButton);
 
     var spacer = new qx.ui.core.Spacer();
     header.add(spacer, { flex: 1 });
@@ -60,6 +62,13 @@ qx.Class.define("myTasks.pages.ToDoPage", {
       }, this);
       
       window.openCentered();
+    }, this);
+
+    // Refresh button listener
+    refreshButton.addListener("execute", () => {
+      var refreshedTasks = myTasks.globals.Tasks.getInstance().getValue();
+      refreshedTasks = refreshedTasks.filter((task) => task[3] === 0);
+      tableModel.setData(refreshedTasks);
     }, this);
 
     // Update form when a table row is clicked

@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/okonutnut/qooxdoo-basecoat#readme",
   "devDependencies": {
+    "@babel/plugin-transform-react-jsx": "^7.28.6",
     "@tailwindcss/cli": "^4.1.18",
     "basecoat-css": "^0.3.10",
     "tailwindcss": "^4.1.18"
