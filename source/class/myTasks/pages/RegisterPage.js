@@ -1,4 +1,4 @@
-qx.Class.define("myTasks.pages.LoginPage", {
+qx.Class.define("myTasks.pages.RegisterPage", {
   extend: qx.ui.container.Composite,
 
   construct() {
@@ -21,7 +21,7 @@ qx.Class.define("myTasks.pages.LoginPage", {
     });
     formContainer.add(logo);
 
-    const title = new qx.ui.basic.Label("Task Manager");
+    const title = new qx.ui.basic.Label("Register as new user");
     title.setFont(
       new qx.bom.Font().set({
         size: 24,
@@ -34,6 +34,10 @@ qx.Class.define("myTasks.pages.LoginPage", {
     });
     formContainer.add(title);
 
+    const fullnameField = new qx.ui.form.TextField();
+    fullnameField.setPlaceholder("Fullname");
+    formContainer.add(fullnameField);
+
     const usernameField = new qx.ui.form.TextField();
     usernameField.setPlaceholder("Username");
     formContainer.add(usernameField);
@@ -42,67 +46,68 @@ qx.Class.define("myTasks.pages.LoginPage", {
     passwordField.setPlaceholder("Password");
     formContainer.add(passwordField);
 
-    const loginButton = new qx.ui.form.Button("Login");
-    formContainer.add(loginButton);
+    const registerButton = new qx.ui.form.Button("Register");
+    formContainer.add(registerButton);
 
-    // Switch to Register button
-    const switchToRegisterButton = new qx.ui.form.Button(
-      "Don't have an account? Register",
+    // Switch to Login button
+    const switchToLoginButton = new qx.ui.form.Button(
+      "Already have an account? Login",
     );
-    switchToRegisterButton.set({ alignX: "center" });
-    formContainer.add(switchToRegisterButton);
-    // Switch to register page event
-    switchToRegisterButton.addListener(
+    switchToLoginButton.set({ alignX: "center" });
+    formContainer.add(switchToLoginButton);
+    // Switch to login page event
+    switchToLoginButton.addListener(
       "execute",
       function () {
-        this.fireEvent("switchToRegister");
+        this.fireEvent("switchToLogin");
       },
       this,
     );
 
     const messageLabel = new qx.ui.basic.Label("");
     messageLabel.set({
-      alignX: "center",
       textColor: "red",
+      alignX: "center",
     });
     formContainer.add(messageLabel);
 
     // Render
     this._add(formContainer, { left: "50%", top: "50%" });
 
-    // Functions
-    async function loginFunction(username, password) {
+    // Register function
+    async function registerFunction(fullname, username, password) {
       try {
-        const response = await fetch("http://localhost:3000/login.php", {
+        const response = await fetch("http://localhost:3000/register.php", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ username, password }),
+          body: JSON.stringify({ fullname, username, password }),
         });
 
-        if (!response.ok) {
-          messageLabel.setValue("Login failed. Please try again.");
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
         const result = await response.json();
 
-        if (result.user) {
-          this.setLoggedIn(true);
+        if (response.ok && result.user && result.token) {
           localStorage.setItem("token", result.token);
           localStorage.setItem("user", JSON.stringify(result.user));
 
-          usernameField.setValue("");
-          passwordField.setValue("");
-          messageLabel.setValue("");
+          messageLabel.setValue("Registration successful! Redirecting...");
+          setTimeout(() => {
+            const app = qx.core.Init.getApplication();
+            if (app && app.showMainPage) {
+              app.showMainPage();
+            } else {
+              window.location.reload();
+            }
+          }, 1200);
         } else if (result.error) {
           messageLabel.setValue(result.error);
         } else {
-          messageLabel.setValue("Invalid username or password.");
+          messageLabel.setValue("Registration failed. Please try again.");
         }
       } catch (error) {
-        messageLabel.setValue("Login failed. Please try again.");
-        console.error("Login error:", error);
+        messageLabel.setValue("Registration failed. Please try again.");
+        console.error("Register error:", error);
       }
     }
     // Listeners
@@ -115,11 +120,16 @@ qx.Class.define("myTasks.pages.LoginPage", {
       this,
     );
 
-    loginButton.addListener("execute", () => {
+    registerButton.addListener("execute", () => {
+      const fullname = fullnameField.getValue();
       const username = usernameField.getValue();
       const password = passwordField.getValue();
 
-      loginFunction.call(this, username, password);
+      if (!fullname || !username || !password) {
+        messageLabel.setValue("All fields are required.");
+        return;
+      }
+      registerFunction.call(this, fullname, username, password);
     });
 
     formContainer.addListenerOnce(
@@ -145,6 +155,6 @@ qx.Class.define("myTasks.pages.LoginPage", {
 
   members: {},
   events: {
-    switchToRegister: "qx.event.type.Event",
+    switchToLogin: "qx.event.type.Event",
   },
 });

@@ -121,7 +121,7 @@ qx.Class.define("myTasks.pages.ToDoPage", {
         var taskName = model.getValue(1, row);
         var dueDate = model.getValue(2, row);
         var priority = model.getValue(3, row);
-        var status = model.getValue(4, row); // status is now included
+        var status = model.getValue(4, row);
 
         // Create form with pre-filled data
         var editForm = new myTasks.components.form.TaskForm(

@@ -52,11 +52,11 @@ qx.Class.define("myTasks.pages.DonePage", {
         const data = await response.json();
         // Map to table model format
         const tableData = data.map((task) => [
+          task.id,
           task.name,
           task.due_date,
           task.priority_level,
           task.status,
-          task.id,
         ]);
         tableModel.setData(tableData);
         return tableData;
@@ -77,11 +77,13 @@ qx.Class.define("myTasks.pages.DonePage", {
       (e) => {
         var row = e.getRow();
         var model = table.getTableModel();
-        var taskName = model.getValue(0, row);
-        var dueDate = model.getValue(1, row);
-        var priority = model.getValue(2, row);
-        var status = model.getValue(3, row);
-        var id = model.getValue(4, row);
+
+        var id = model.getValue(0, row);
+        var taskName = model.getValue(1, row);
+        var dueDate = model.getValue(2, row);
+        var priority = model.getValue(3, row);
+        var status = model.getValue(4, row);
+
         // Create form with pre-filled data
         var editForm = new myTasks.components.form.TaskForm(
           taskName,

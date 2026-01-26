@@ -30,41 +30,46 @@ qx.Class.define("myTasks.Application", {
      * @lint ignoreDeprecated(alert)
      */
     main() {
-      // Call super class
       super.main();
-
-      // Enable logging in debug variant
       if (qx.core.Environment.get("qx.debug")) {
-        // support native logging capabilities, e.g. Firebug for Firefox
         qx.log.appender.Native;
-        // support additional cross-browser console. Press F7 to toggle visibility
         qx.log.appender.Console;
       }
-
-      // Document is the application root
       const doc = this.getRoot();
 
       // Pages
-      const loginPage = new myTasks.pages.LoginPage();
+      let loginPage = new myTasks.pages.LoginPage();
+      let registerPage = null;
 
       // Default page: show login first
       doc.add(loginPage, { edge: 0 });
 
-      // Listeners
+      // Login success
       loginPage.addListener("changeLoggedIn", (e) => {
         if (e.getData() == true) {
           doc.removeAll();
-
           const mainPage = new myTasks.pages.MainPage();
           doc.add(mainPage, { edge: 0 });
-
-          // When MainPage requests logout, show login page and reset state
           mainPage.addListener("logout", () => {
             doc.removeAll();
             loginPage.setLoggedIn(false);
             doc.add(loginPage, { edge: 0 });
           });
         }
+      }, this);
+
+      // Switch to register page
+      loginPage.addListener("switchToRegister", () => {
+        doc.removeAll();
+        if (!registerPage) {
+          registerPage = new myTasks.pages.RegisterPage();
+        }
+        doc.add(registerPage, { edge: 0 });
+        // Listen for switch back to login
+        registerPage.addListener("switchToLogin", () => {
+          doc.removeAll();
+          doc.add(loginPage, { edge: 0 });
+        }, this);
       }, this);
     },
   },

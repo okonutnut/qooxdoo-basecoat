@@ -55,10 +55,12 @@ qx.Class.define("myTasks.components.form.TaskForm", {
       if (status === 0) {
         formLayout.add(submitButton);
         formLayout.add(markAsInProgressButton);
+        formLayout.add(deleteButton);
       } else if (status === 1) {
         formLayout.add(markAsDoneButton);
+      } else if (status === 2) {
+        formLayout.add(deleteButton);
       }
-      formLayout.add(deleteButton);
     }
 
     // Listeners

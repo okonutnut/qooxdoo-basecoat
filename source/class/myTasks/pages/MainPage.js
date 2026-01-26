@@ -33,24 +33,21 @@ qx.Class.define("myTasks.pages.MainPage", {
       user = JSON.parse(localStorage.getItem("user"));
     } catch (e) {}
 
-    var nameLabel = new qx.ui.basic.Label();
-    nameLabel.setFont(
-      new qx.bom.Font().set({
-        bold: true,
-        size: 16,
-      }),
+    // Toolbar always visible, menu button shows user name if available
+    var toolbar = new qx.ui.toolbar.ToolBar();
+    toolbar.setBackgroundColor("transparent");
+
+    var menu = new qx.ui.menu.Menu();
+    var logoutButton = new qx.ui.menu.Button("Logout");
+    menu.add(logoutButton);
+    // Add dropdown icon beside label
+    var menuButton = new qx.ui.toolbar.MenuButton(
+      user && user.name ? user.name : "File",
+      null,
+      menu,
     );
-    nameLabel.setAlignY("middle");
-
-    // Set value immediately (important!)
-    if (user && user.name) {
-      nameLabel.setValue("Hello, " + user.name + "!");
-    }
-
-    header.add(nameLabel);
-
-    var logoutButton = new qx.ui.form.Button("Logout");
-    header.add(logoutButton);
+    toolbar.add(menuButton);
+    header.add(toolbar);
 
     // Tab View
     var tabView = new qx.ui.tabview.TabView();
@@ -73,15 +70,6 @@ qx.Class.define("myTasks.pages.MainPage", {
     doneTab.add(donePage);
     tabView.add(doneTab);
 
-    // Justify tabs: make each tab button flex equally
-    var tabBar = tabView.getChildControl("bar");
-    tabBar.setLayout(new qx.ui.layout.HBox(0));
-
-    tabBar.getChildren().forEach(function (button) {
-      button.setAllowGrowX(true); // allow horizontal growth
-      button.setWidth(null); // unset fixed width
-    });
-
     // Listeners
     this.addListenerOnce(
       "appear",
@@ -93,7 +81,7 @@ qx.Class.define("myTasks.pages.MainPage", {
 
         const user = JSON.parse(localStorage.getItem("user"));
         if (user?.name) {
-          nameLabel.setValue("Hello, " + user.name + "!");
+          menuButton.setLabel(user.name);
         }
       },
       this,
@@ -102,7 +90,6 @@ qx.Class.define("myTasks.pages.MainPage", {
     logoutButton.addListener(
       "execute",
       function () {
-        nameLabel.setValue("");
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         this.fireEvent("logout");
