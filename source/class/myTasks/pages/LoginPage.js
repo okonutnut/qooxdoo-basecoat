@@ -34,20 +34,28 @@ qx.Class.define("myTasks.pages.LoginPage", {
     });
     formContainer.add(title);
 
-    const usernameField = new qx.ui.form.TextField();
+    // const usernameField = new qx.ui.form.TextField();
+    const usernameField = new myTasks.basecoat.Input();
     usernameField.setPlaceholder("Username");
     formContainer.add(usernameField);
 
-    const passwordField = new qx.ui.form.PasswordField();
+    // const passwordField = new qx.ui.form.PasswordField();
+    const passwordField = new myTasks.basecoat.Input();
+    passwordField.setType("password");
     passwordField.setPlaceholder("Password");
     formContainer.add(passwordField);
 
-    const loginButton = new qx.ui.form.Button("Login");
+    const loginButton = new myTasks.basecoat.Button("Login");
     formContainer.add(loginButton);
 
-    const switchToRegisterButton = new qx.ui.form.Button(
+    // const switchToRegisterButton = new qx.ui.form.Button(
+    //   "Don't have an account? Register",
+    // );
+    const switchToRegisterButton = new myTasks.basecoat.Button(
       "Don't have an account? Register",
     );
+    switchToRegisterButton.setVariant("link");
+    switchToRegisterButton.setColor("blue-600");
     switchToRegisterButton.set({ alignX: "center" });
     formContainer.add(switchToRegisterButton);
 
