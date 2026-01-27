@@ -84,12 +84,7 @@ qx.Class.define("myTasks.pages.RegisterPage", {
 
           messageLabel.setValue("Registration successful! Redirecting...");
           setTimeout(() => {
-            const app = qx.core.Init.getApplication();
-            if (app && app.showMainPage) {
-              app.showMainPage();
-            } else {
-              window.location.reload();
-            }
+            this.fireEvent("registered");
           }, 1200);
         } else if (result.error) {
           messageLabel.setValue(result.error);
@@ -157,5 +152,6 @@ qx.Class.define("myTasks.pages.RegisterPage", {
   members: {},
   events: {
     switchToLogin: "qx.event.type.Event",
+    registered: "qx.event.type.Event",
   },
 });

@@ -95,6 +95,29 @@ qx.Class.define("myTasks.Application", {
             },
             this,
           );
+
+          // After successful registration, redirect to main page
+          registerPage.addListener("registered", () => {
+            doc.removeAll();
+            // Dispose the old mainPage if it exists
+            if (mainPage && !mainPage.isDisposed()) {
+              mainPage.dispose();
+            }
+            // Create a new mainPage instance each time
+            mainPage = new myTasks.pages.MainPage();
+            doc.add(mainPage, { edge: 0 });
+
+            mainPage.addListener("logout", () => {
+              doc.removeAll();
+              loginPage.setLoggedIn(false);
+              // Dispose mainPage when logging out
+              if (mainPage && !mainPage.isDisposed()) {
+                mainPage.dispose();
+              }
+              mainPage = null;
+              doc.add(loginPage, { edge: 0 });
+            });
+          });
         },
         this,
       );

@@ -40,20 +40,8 @@ switch ($method) {
             }
 
             echo json_encode($task);
-        } elseif (isset($_GET['status'])) {
-            $status = $_GET['status'];
-            $stmt = $pdo->prepare("
-                SELECT t.*, u.name AS user_name
-                FROM tasks t
-                LEFT JOIN users u ON u.id = t.user_id
-                WHERE t.status = ?
-                ORDER BY t.created_at DESC
-            ");
-            $stmt->execute([$status]);
-            $tasks = $stmt->fetchAll();
-
-            echo json_encode($tasks);
         } elseif (isset($_GET['status']) && isset($_GET['user_id'])) {
+            // Filter by both status and user_id (most specific case first)
             $status = $_GET['status'];
             $user_id = $_GET['user_id'];
             $stmt = $pdo->prepare("
@@ -67,7 +55,36 @@ switch ($method) {
             $tasks = $stmt->fetchAll();
 
             echo json_encode($tasks);
+        } elseif (isset($_GET['status'])) {
+            // Filter by status only (fallback if user_id not provided)
+            $status = $_GET['status'];
+            $stmt = $pdo->prepare("
+                SELECT t.*, u.name AS user_name
+                FROM tasks t
+                LEFT JOIN users u ON u.id = t.user_id
+                WHERE t.status = ?
+                ORDER BY t.created_at DESC
+            ");
+            $stmt->execute([$status]);
+            $tasks = $stmt->fetchAll();
+
+            echo json_encode($tasks);
+        } elseif (isset($_GET['user_id'])) {
+            // Filter by user_id only (if no status provided)
+            $user_id = $_GET['user_id'];
+            $stmt = $pdo->prepare("
+                SELECT t.*, u.name AS user_name
+                FROM tasks t
+                LEFT JOIN users u ON u.id = t.user_id
+                WHERE t.user_id = ?
+                ORDER BY t.created_at DESC
+            ");
+            $stmt->execute([$user_id]);
+            $tasks = $stmt->fetchAll();
+
+            echo json_encode($tasks);
         } else {
+            // Get all tasks (no filters)
             $stmt = $pdo->query("
                 SELECT t.*, u.name AS user_name
                 FROM tasks t

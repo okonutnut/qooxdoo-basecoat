@@ -5,7 +5,7 @@ qx.Class.define("myTasks.components.form.TaskForm", {
     this.base(arguments);
     this.setLayout(new qx.ui.layout.Canvas());
 
-    var session = myTasks.global.Session.getInstance();
+    var session = myTasks.globals.Session.getInstance();
 
     var isAdd = taskObj == null || taskObj == undefined;
     var isTodo = taskObj?.status === "0";
