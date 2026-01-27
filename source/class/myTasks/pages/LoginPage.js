@@ -36,12 +36,10 @@ qx.Class.define("myTasks.pages.LoginPage", {
 
     const usernameField = new qx.ui.form.TextField();
     usernameField.setPlaceholder("Username");
-    usernameField.setValue("darlito");
     formContainer.add(usernameField);
 
     const passwordField = new qx.ui.form.PasswordField();
     passwordField.setPlaceholder("Password");
-    passwordField.setValue("dar123");
     formContainer.add(passwordField);
 
     const loginButton = new qx.ui.form.Button("Login");

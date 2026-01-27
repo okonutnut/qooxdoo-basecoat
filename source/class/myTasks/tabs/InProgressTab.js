@@ -1,4 +1,4 @@
-qx.Class.define("myTasks.pages.DonePage", {
+qx.Class.define("myTasks.tabs.InProgressTab", {
   extend: qx.ui.container.Composite,
 
   construct: function (session) {
@@ -18,7 +18,6 @@ qx.Class.define("myTasks.pages.DonePage", {
     header.add(spacer, { flex: 1 });
 
     var searchField = new qx.ui.form.TextField();
-    // var searchField = new myTasks.components.ui.TextField("Search Tasks...");
     searchField.setPlaceholder("Search Tasks...");
     searchField.setWidth(200);
     header.add(searchField);
@@ -42,7 +41,7 @@ qx.Class.define("myTasks.pages.DonePage", {
     this.add(layout, { edge: 0 });
 
     // Fetch tasks from API
-    async function fetchDoneTasks() {
+    async function fetchInProgressTasks() {
       try {
         if (!session) {
           tableModel.setData([]);
@@ -50,12 +49,14 @@ qx.Class.define("myTasks.pages.DonePage", {
         }
 
         const response = await fetch(
-          "http://localhost:3000/tasks.php?status=2&user_id=" + session.user.id,
+          "http://localhost:3000/tasks.php?status=1&user_id=" + session.user.id,
         );
+
         if (!response.ok) {
           tableModel.setData([]);
-          throw new Error("Failed to fetch done tasks");
+          throw new Error("Failed to fetch in-progress tasks");
         }
+
         const data = await response.json();
         // Map to table model format
         const tableData = data.map((task) => [
@@ -65,7 +66,9 @@ qx.Class.define("myTasks.pages.DonePage", {
           task.priority_level,
           task.status,
         ]);
+
         tableModel.setData(tableData);
+
         return tableData;
       } catch (error) {
         console.error(error);
@@ -75,7 +78,7 @@ qx.Class.define("myTasks.pages.DonePage", {
     }
 
     // Initial load
-    fetchDoneTasks();
+    fetchInProgressTasks();
 
     // Listeners
     // Update form when a table row is clicked
@@ -86,16 +89,16 @@ qx.Class.define("myTasks.pages.DonePage", {
         var model = table.getTableModel();
 
         var id = model.getValue(0, row);
-        var name = model.getValue(1, row);
-        var due_date = model.getValue(2, row);
-        var priority_level = model.getValue(3, row);
+        var taskName = model.getValue(1, row);
+        var dueDate = model.getValue(2, row);
+        var priority = model.getValue(3, row);
         var status = model.getValue(4, row);
 
         // Create form with pre-filled data
         var taskObj = {
-          name,
-          due_date,
-          priority_level,
+          taskName,
+          dueDate,
+          priority,
           status,
           id,
         };
@@ -106,7 +109,7 @@ qx.Class.define("myTasks.pages.DonePage", {
         editForm.addListener(
           "changeIsAdded",
           async () => {
-            await fetchDoneTasks();
+            await fetchInProgressTasks();
             window.close();
             window.removeAll();
           },
@@ -121,7 +124,7 @@ qx.Class.define("myTasks.pages.DonePage", {
     refreshButton.addListener(
       "execute",
       async () => {
-        await fetchDoneTasks();
+        await fetchInProgressTasks();
       },
       this,
     );
@@ -131,7 +134,7 @@ qx.Class.define("myTasks.pages.DonePage", {
       "input",
       async () => {
         var filter = searchField.getValue().toLowerCase();
-        const allTasks = await fetchDoneTasks();
+        const allTasks = await fetchInProgressTasks();
         var filteredData = allTasks.filter((row) =>
           row[0].toLowerCase().includes(filter),
         );

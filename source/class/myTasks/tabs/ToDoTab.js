@@ -1,4 +1,4 @@
-qx.Class.define("myTasks.pages.InProgressPage", {
+qx.Class.define("myTasks.tabs.ToDoTab", {
   extend: qx.ui.container.Composite,
 
   construct: function (session) {
@@ -11,6 +11,9 @@ qx.Class.define("myTasks.pages.InProgressPage", {
     headerLayout.setAlignY("middle");
     var header = new qx.ui.container.Composite(headerLayout);
 
+    var addButton = new qx.ui.form.Button("Add Task");
+    header.add(addButton);
+
     var refreshButton = new qx.ui.form.Button("Refresh");
     header.add(refreshButton);
 
@@ -22,13 +25,12 @@ qx.Class.define("myTasks.pages.InProgressPage", {
     searchField.setWidth(200);
     header.add(searchField);
 
-    // Table
     var tableModel = new qx.ui.table.model.Simple();
     tableModel.setColumns(
       ["ID", "Task", "Due Date", "Priority", "Status"],
       ["id", "name", "due_date", "priority_level", "status"],
     );
-    tableModel.setData([]);
+
     var table = new myTasks.components.DataTable(tableModel);
 
     // Window
@@ -38,27 +40,30 @@ qx.Class.define("myTasks.pages.InProgressPage", {
     // Render
     layout.add(header);
     layout.add(table, { flex: 1 });
+
     this.add(layout, { edge: 0 });
 
-    // Fetch tasks from API
-    async function fetchInProgressTasks() {
+    // Functions
+    async function FetchData() {
       try {
-        if (!session) {
+        if (!session.user.id) {
+          console.error("User session is invalid or missing.");
           tableModel.setData([]);
           return [];
         }
 
-        const response = await fetch(
-          "http://localhost:3000/tasks.php?status=1&user_id=" + session.user.id,
-        );
+        const url =
+          "http://localhost:3000/tasks.php?status=0&user_id=" + session.user.id;
+        const response = await fetch(url);
 
         if (!response.ok) {
           tableModel.setData([]);
-          throw new Error("Failed to fetch in-progress tasks");
+          throw new Error(`HTTP error! Status: ${response.status}`);
         }
 
         const data = await response.json();
-        // Map to table model format
+
+        // Map to table model format (include status)
         const tableData = data.map((task) => [
           task.id,
           task.name,
@@ -71,16 +76,36 @@ qx.Class.define("myTasks.pages.InProgressPage", {
 
         return tableData;
       } catch (error) {
-        console.error(error);
+        console.error("Error fetching tasks:", error);
         tableModel.setData([]);
         return [];
       }
     }
-
-    // Initial load
-    fetchInProgressTasks();
+    FetchData();
 
     // Listeners
+    addButton.addListener(
+      "execute",
+      () => {
+        var addForm = new myTasks.components.form.TaskForm();
+        window.add(addForm, { edge: 0 });
+
+        // Update table on task addition
+        addForm.addListener(
+          "changeIsAdded",
+          () => {
+            refreshButton.execute();
+            window.close();
+            window.removeAll();
+          },
+          this,
+        );
+
+        window.openCentered();
+      },
+      this,
+    );
+
     // Update form when a table row is clicked
     table.addListener(
       "cellTap",
@@ -89,15 +114,15 @@ qx.Class.define("myTasks.pages.InProgressPage", {
         var model = table.getTableModel();
 
         var id = model.getValue(0, row);
-        var taskName = model.getValue(1, row);
-        var dueDate = model.getValue(2, row);
+        var name = model.getValue(1, row);
+        var due_date = model.getValue(2, row);
         var priority = model.getValue(3, row);
         var status = model.getValue(4, row);
 
         // Create form with pre-filled data
         var taskObj = {
-          taskName,
-          dueDate,
+          name,
+          due_date,
           priority,
           status,
           id,
@@ -105,39 +130,43 @@ qx.Class.define("myTasks.pages.InProgressPage", {
         var editForm = new myTasks.components.form.TaskForm(taskObj);
         window.removeAll();
         window.add(editForm, { edge: 0 });
+
         // Update table on task modification
         editForm.addListener(
           "changeIsAdded",
-          async () => {
-            await fetchInProgressTasks();
+          () => {
+            refreshButton.execute();
             window.close();
             window.removeAll();
           },
           this,
         );
+
         window.openCentered();
       },
       this,
     );
 
-    // Refresh button listener
+    // Refresh
     refreshButton.addListener(
       "execute",
       async () => {
-        await fetchInProgressTasks();
+        await FetchData(); // await ensures the table is updated after fetch
       },
       this,
     );
 
-    // Search functionality
+    // Search
     searchField.addListener(
       "input",
       async () => {
-        var filter = searchField.getValue().toLowerCase();
-        const allTasks = await fetchInProgressTasks();
-        var filteredData = allTasks.filter((row) =>
-          row[0].toLowerCase().includes(filter),
+        const filter = searchField.getValue().toLowerCase();
+        const allTasks = await FetchData(); // get current data
+
+        const filteredData = allTasks.filter((task) =>
+          task[1].toLowerCase().includes(filter),
         );
+
         tableModel.setData(filteredData);
       },
       this,

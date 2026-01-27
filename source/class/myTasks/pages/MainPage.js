@@ -48,19 +48,19 @@ qx.Class.define("myTasks.pages.MainPage", {
     var tabView = new qx.ui.tabview.TabView();
 
     var todoTab = new qx.ui.tabview.Page("To Do");
-    var todoPage = new myTasks.pages.ToDoPage(session.getValue());
+    var todoPage = new myTasks.tabs.ToDoTab(session.getValue());
     todoTab.setLayout(new qx.ui.layout.VBox(10));
     todoTab.add(todoPage);
     tabView.add(todoTab);
 
     var inProgressTab = new qx.ui.tabview.Page("In Progress");
-    var inProgressPage = new myTasks.pages.InProgressPage(session.getValue());
+    var inProgressPage = new myTasks.tabs.InProgressTab(session.getValue());
     inProgressTab.setLayout(new qx.ui.layout.VBox(10));
     inProgressTab.add(inProgressPage);
     tabView.add(inProgressTab);
 
     var doneTab = new qx.ui.tabview.Page("Done");
-    var donePage = new myTasks.pages.DonePage(session.getValue());
+    var donePage = new myTasks.tabs.DoneTab(session.getValue());
     doneTab.setLayout(new qx.ui.layout.VBox(10));
     doneTab.add(donePage);
     tabView.add(doneTab);
