@@ -45,8 +45,23 @@ qx.Class.define("myTasks.pages.DonePage", {
     // Fetch tasks from API
     async function fetchDoneTasks() {
       try {
+        // Check if user exists and has an id before fetching
+        const userStr = localStorage.getItem("user");
+        if (!userStr) {
+          console.warn("No user found in localStorage");
+          tableModel.setData([]);
+          return [];
+        }
+
+        const user = JSON.parse(userStr);
+        if (!user || !user.id) {
+          console.warn("User ID is missing");
+          tableModel.setData([]);
+          return [];
+        }
+
         const response = await fetch(
-          "http://localhost:3000/tasks.php?status=2",
+          "http://localhost:3000/tasks.php?status=2&user_id=" + user.id,
         );
         if (!response.ok) throw new Error("Failed to fetch done tasks");
         const data = await response.json();
@@ -79,19 +94,20 @@ qx.Class.define("myTasks.pages.DonePage", {
         var model = table.getTableModel();
 
         var id = model.getValue(0, row);
-        var taskName = model.getValue(1, row);
-        var dueDate = model.getValue(2, row);
-        var priority = model.getValue(3, row);
+        var name = model.getValue(1, row);
+        var due_date = model.getValue(2, row);
+        var priority_level = model.getValue(3, row);
         var status = model.getValue(4, row);
 
         // Create form with pre-filled data
-        var editForm = new myTasks.components.form.TaskForm(
-          taskName,
-          dueDate,
-          priority,
+        var taskObj = {
+          name,
+          due_date,
+          priority_level,
           status,
           id,
-        );
+        };
+        var editForm = new myTasks.components.form.TaskForm(taskObj);
         window.removeAll();
         window.add(editForm, { edge: 0 });
         // Update table on task modification

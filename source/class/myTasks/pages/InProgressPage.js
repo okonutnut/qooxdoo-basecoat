@@ -19,7 +19,6 @@ qx.Class.define("myTasks.pages.InProgressPage", {
     header.add(spacer, { flex: 1 });
 
     var searchField = new qx.ui.form.TextField();
-    // var searchField = new myTasks.components.ui.TextField("Search Tasks...");
     searchField.setPlaceholder("Search Tasks...");
     searchField.setWidth(200);
     header.add(searchField);
@@ -45,9 +44,25 @@ qx.Class.define("myTasks.pages.InProgressPage", {
     // Fetch tasks from API
     async function fetchInProgressTasks() {
       try {
+        // Check if user exists and has an id before fetching
+        const userStr = localStorage.getItem("user");
+        if (!userStr) {
+          console.warn("No user found in localStorage");
+          tableModel.setData([]);
+          return [];
+        }
+
+        const user = JSON.parse(userStr);
+        if (!user || !user.id) {
+          console.warn("User ID is missing");
+          tableModel.setData([]);
+          return [];
+        }
+
         const response = await fetch(
-          "http://localhost:3000/tasks.php?status=1",
+          "http://localhost:3000/tasks.php?status=1&user_id=" + user.id,
         );
+
         if (!response.ok) throw new Error("Failed to fetch in-progress tasks");
         const data = await response.json();
         // Map to table model format
@@ -85,13 +100,14 @@ qx.Class.define("myTasks.pages.InProgressPage", {
         var status = model.getValue(4, row);
 
         // Create form with pre-filled data
-        var editForm = new myTasks.components.form.TaskForm(
+        var taskObj = {
           taskName,
           dueDate,
           priority,
           status,
           id,
-        );
+        };
+        var editForm = new myTasks.components.form.TaskForm(taskObj);
         window.removeAll();
         window.add(editForm, { edge: 0 });
         // Update table on task modification

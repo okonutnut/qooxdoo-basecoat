@@ -53,6 +53,20 @@ switch ($method) {
             $tasks = $stmt->fetchAll();
 
             echo json_encode($tasks);
+        } elseif (isset($_GET['status']) && isset($_GET['user_id'])) {
+            $status = $_GET['status'];
+            $user_id = $_GET['user_id'];
+            $stmt = $pdo->prepare("
+                SELECT t.*, u.name AS user_name
+                FROM tasks t
+                LEFT JOIN users u ON u.id = t.user_id
+                WHERE t.status = ? AND t.user_id = ?
+                ORDER BY t.created_at DESC
+            ");
+            $stmt->execute([$status, $user_id]);
+            $tasks = $stmt->fetchAll();
+
+            echo json_encode($tasks);
         } else {
             $stmt = $pdo->query("
                 SELECT t.*, u.name AS user_name

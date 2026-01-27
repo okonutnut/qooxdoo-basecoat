@@ -1,0 +1,278 @@
+/**
+ * Script to generate TypeScript definitions from qooxdoo metadata
+ * This reads the compiled metadata JSON files and generates proper TypeScript definitions
+ */
+
+const fs = require('fs');
+const path = require('path');
+
+const metaDir = path.join(__dirname, 'compiled', 'meta', 'qx');
+const outputFile = path.join(__dirname, 'source', 'class', 'myTasks', 'Qx.d.ts');
+
+/**
+ * Convert JSDoc type to TypeScript type
+ */
+function jsdocToType(jsdocType) {
+  if (!jsdocType) return 'any';
+  
+  // Convert to string if not already
+  const typeStr = String(jsdocType);
+  
+  // Handle arrays
+  if (typeStr.includes('[]')) {
+    const baseType = typeStr.replace('[]', '').trim();
+    return `${jsdocToType(baseType)}[]`;
+  }
+  
+  // Handle union types
+  if (typeStr.includes('|')) {
+    return typeStr.split('|').map(t => jsdocToType(t.trim())).join(' | ');
+  }
+  
+  // Map common types
+  const typeMap = {
+    'String': 'string',
+    'Number': 'number',
+    'Integer': 'number',
+    'Boolean': 'boolean',
+    'Object': 'any',
+    'Map': 'any',
+    'Function': 'Function',
+    'qx.Promise': 'Promise<any>',
+    'qx.event.type.Event': 'qx.event.type.Event',
+    'qx.event.type.Data': 'qx.event.type.Data',
+  };
+  
+  // Check for qx namespace types
+  if (typeStr.startsWith('qx.')) {
+    return typeStr;
+  }
+  
+  return typeMap[typeStr] || typeStr;
+}
+
+/**
+ * Extract parameter types from JSDoc
+ */
+function extractParams(params, jsdoc) {
+  if (!jsdoc || !jsdoc['@param']) return params;
+  
+  const jsdocParams = Array.isArray(jsdoc['@param']) ? jsdoc['@param'] : [jsdoc['@param']];
+  return params.map((param, index) => {
+    const jsdocParam = jsdocParams.find(p => p.paramName === param.name);
+    if (jsdocParam && jsdocParam.type) {
+      return {
+        ...param,
+        type: jsdocToType(jsdocParam.type)
+      };
+    }
+    return param;
+  });
+}
+
+/**
+ * Extract return type from JSDoc
+ */
+function extractReturnType(jsdoc) {
+  if (!jsdoc || !jsdoc['@return']) return 'any';
+  
+  const returnDoc = Array.isArray(jsdoc['@return']) ? jsdoc['@return'][0] : jsdoc['@return'];
+  if (returnDoc && returnDoc.body) {
+    const match = returnDoc.body.match(/\{([^}]+)\}/);
+    if (match) {
+      return jsdocToType(match[1]);
+    }
+  }
+  return 'any';
+}
+
+/**
+ * Generate method signature
+ */
+function generateMethod(methodName, method) {
+  const params = method.params || [];
+  const processedParams = extractParams(params, method.jsdoc);
+  const paramStr = processedParams.map(p => {
+    const type = p.type ? jsdocToType(p.type) : 'any';
+    return `${p.name}: ${type}`;
+  }).join(', ');
+  
+  const returnType = method.returnType ? jsdocToType(method.returnType.type) : extractReturnType(method.jsdoc);
+  
+  return `    ${methodName}(${paramStr}): ${returnType};`;
+}
+
+/**
+ * Generate property getter/setter
+ */
+function generateProperty(propName, prop) {
+  const check = prop.check || 'any';
+  const type = jsdocToType(check);
+  const init = prop.init !== undefined ? ` = ${JSON.stringify(prop.init)}` : '';
+  
+  return `    get${propName.charAt(0).toUpperCase() + propName.slice(1)}(): ${type};\n    set${propName.charAt(0).toUpperCase() + propName.slice(1)}(value: ${type}): this;`;
+}
+
+/**
+ * Process a class metadata file
+ */
+function processClass(className, classData) {
+  const parts = className.split('.');
+  const namespace = parts.slice(0, -1);
+  const classShortName = parts[parts.length - 1];
+  
+  let output = '';
+  
+  // Generate class definition
+  output += `  export class ${classShortName} {\n`;
+  
+  // Constructor
+  const construct = classData.construct;
+  if (construct && construct.params) {
+    const paramStr = construct.params.map(p => `${p.name}?: any`).join(', ');
+    output += `    constructor(${paramStr});\n`;
+  } else {
+    output += `    constructor(...args: any[]);\n`;
+  }
+  
+  // Members (methods)
+  if (classData.members) {
+    Object.keys(classData.members).forEach(memberName => {
+      const member = classData.members[memberName];
+      if (member.type === 'function' && member.access === 'public') {
+        output += generateMethod(memberName, member) + '\n';
+      }
+    });
+  }
+  
+  // Properties
+  if (classData.properties) {
+    Object.keys(classData.properties).forEach(propName => {
+      const prop = classData.properties[propName];
+      output += generateProperty(propName, prop) + '\n';
+    });
+  }
+  
+  // Common methods from qx.core.Object
+  output += `    dispose(): void;\n`;
+  output += `    isDisposed(): boolean;\n`;
+  output += `    addListener(event: string, handler: Function, context?: any): void;\n`;
+  output += `    removeListener(event: string, handler: Function, context?: any): void;\n`;
+  output += `    addListenerOnce(event: string, handler: Function, context?: any): void;\n`;
+  output += `    removeAllListeners(event?: string): void;\n`;
+  output += `    fireEvent(event: string, data?: any): void;\n`;
+  output += `    set(props: any): this;\n`;
+  output += `    get(prop: string): any;\n`;
+  
+  output += `  }\n`;
+  
+  return { namespace, classShortName, output };
+}
+
+/**
+ * Main function to generate types
+ */
+function generateTypes() {
+  console.log('Generating TypeScript definitions from qooxdoo metadata...');
+  
+  let output = `// TypeScript definitions for qooxdoo
+// Generated from compiled metadata
+// This file provides type information for LSP support
+
+declare namespace qx {\n`;
+
+  // Process core classes first
+  const coreClasses = [
+    'qx.Class',
+    'qx.core.Object',
+    'qx.application.Standalone',
+    'qx.ui.core.Widget',
+    'qx.ui.container.Composite',
+    'qx.ui.layout.Canvas',
+    'qx.ui.layout.VBox',
+    'qx.ui.layout.HBox',
+    'qx.ui.form.Button',
+    'qx.ui.form.TextField',
+    'qx.ui.basic.Label',
+    'qx.ui.core.Spacer',
+    'qx.ui.tabview.TabView',
+    'qx.ui.tabview.Page',
+    'qx.ui.toolbar.ToolBar',
+    'qx.ui.toolbar.MenuButton',
+    'qx.ui.menu.Menu',
+    'qx.ui.menu.Button',
+    'qx.ui.table.model.Simple',
+    'qx.bom.Font',
+    'qx.core.Environment',
+    'qx.log.appender.Native',
+    'qx.log.appender.Console',
+    'qx.event.type.Event',
+    'qx.event.type.Data',
+  ];
+  
+  const processed = new Set();
+  const namespaceMap = new Map();
+  
+  coreClasses.forEach(className => {
+    const metaFile = path.join(metaDir, ...className.split('.').slice(1)) + '.json';
+    if (fs.existsSync(metaFile)) {
+      try {
+        const classData = JSON.parse(fs.readFileSync(metaFile, 'utf8'));
+        const result = processClass(className, classData);
+        
+        if (!namespaceMap.has(result.namespace.join('.'))) {
+          namespaceMap.set(result.namespace.join('.'), []);
+        }
+        namespaceMap.get(result.namespace.join('.')).push(result.output);
+        processed.add(className);
+      } catch (e) {
+        console.error(`Error processing ${className}:`, e.message);
+      }
+    }
+  });
+  
+  // Generate namespace structure
+  const namespaces = Array.from(namespaceMap.keys()).sort();
+  namespaces.forEach(ns => {
+    const parts = ns.split('.');
+    let indent = '  ';
+    let currentPath = 'qx';
+    
+    parts.forEach((part, index) => {
+      if (part) {
+        currentPath += `.${part}`;
+        output += `${indent}export namespace ${part} {\n`;
+        indent += '  ';
+      }
+    });
+    
+    namespaceMap.get(ns).forEach(classDef => {
+      output += classDef;
+    });
+    
+    // Close namespaces
+    parts.forEach(() => {
+      indent = indent.slice(2);
+      if (indent.length >= 2) {
+        output += `${indent}}\n`;
+      }
+    });
+  });
+  
+  output += `}\n\n`;
+  output += `declare const qx: typeof qx;\n`;
+  output += `export = qx;\n`;
+  
+  // Write output
+  fs.writeFileSync(outputFile, output, 'utf8');
+  console.log(`Generated ${outputFile}`);
+  console.log(`Processed ${processed.size} classes`);
+}
+
+// Run if called directly
+if (require.main === module) {
+  generateTypes();
+}
+
+module.exports = { generateTypes };
+

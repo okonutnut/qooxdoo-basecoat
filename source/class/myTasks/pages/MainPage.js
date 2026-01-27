@@ -70,6 +70,11 @@ qx.Class.define("myTasks.pages.MainPage", {
     doneTab.add(donePage);
     tabView.add(doneTab);
 
+    // Store references for cleanup
+    this._menu = menu;
+    this._logoutButton = logoutButton;
+    this._menuButton = menuButton;
+
     // Listeners
     this.addListenerOnce(
       "appear",
@@ -82,6 +87,13 @@ qx.Class.define("myTasks.pages.MainPage", {
         const user = JSON.parse(localStorage.getItem("user"));
         if (user?.name) {
           menuButton.setLabel(user.name);
+        }
+
+        // Ensure the menu is properly initialized
+        // @ts-ignore
+        if (!menu.isDisposed()) {
+          menu.removeAll();
+          menu.add(logoutButton);
         }
       },
       this,
@@ -97,10 +109,25 @@ qx.Class.define("myTasks.pages.MainPage", {
       this,
     );
 
+    // Clean up event listeners and menu on dispose
+    // @ts-ignore
+    this.addListener("dispose", function () {
+      // @ts-ignore
+      if (logoutButton && !logoutButton.isDisposed()) {
+        // @ts-ignore
+        logoutButton.removeAllListeners();
+      }
+      // @ts-ignore
+      if (menu && !menu.isDisposed()) {
+        menu.removeAll();
+      }
+    });
+
     // Render
     mainLayout.add(header);
     mainLayout.add(tabView, { flex: 1 });
 
+    // @ts-ignore
     this.add(mainLayout, { edge: 0 });
   },
 

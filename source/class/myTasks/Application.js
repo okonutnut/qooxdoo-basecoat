@@ -40,37 +40,64 @@ qx.Class.define("myTasks.Application", {
       // Pages
       let loginPage = new myTasks.pages.LoginPage();
       let registerPage = null;
+      let mainPage = null;
 
       // Default page: show login first
       doc.add(loginPage, { edge: 0 });
 
       // Login success
-      loginPage.addListener("changeLoggedIn", (e) => {
-        if (e.getData() == true) {
-          doc.removeAll();
-          const mainPage = new myTasks.pages.MainPage();
-          doc.add(mainPage, { edge: 0 });
-          mainPage.addListener("logout", () => {
+      loginPage.addListener(
+        "changeLoggedIn",
+        (e) => {
+          if (e.getData() == true) {
             doc.removeAll();
-            loginPage.setLoggedIn(false);
-            doc.add(loginPage, { edge: 0 });
-          });
-        }
-      }, this);
+
+            // Dispose the old mainPage if it exists
+            if (mainPage && !mainPage.isDisposed()) {
+              mainPage.dispose();
+            }
+
+            // Create a new mainPage instance each time
+            mainPage = new myTasks.pages.MainPage();
+            doc.add(mainPage, { edge: 0 });
+
+            mainPage.addListener("logout", () => {
+              doc.removeAll();
+              loginPage.setLoggedIn(false);
+              // Dispose mainPage when logging out
+              if (mainPage && !mainPage.isDisposed()) {
+                mainPage.dispose();
+              }
+              mainPage = null;
+              doc.add(loginPage, { edge: 0 });
+            });
+          }
+        },
+        this,
+      );
 
       // Switch to register page
-      loginPage.addListener("switchToRegister", () => {
-        doc.removeAll();
-        if (!registerPage) {
-          registerPage = new myTasks.pages.RegisterPage();
-        }
-        doc.add(registerPage, { edge: 0 });
-        // Listen for switch back to login
-        registerPage.addListener("switchToLogin", () => {
+      loginPage.addListener(
+        "switchToRegister",
+        () => {
           doc.removeAll();
-          doc.add(loginPage, { edge: 0 });
-        }, this);
-      }, this);
+
+          if (!registerPage) {
+            registerPage = new myTasks.pages.RegisterPage();
+          }
+          doc.add(registerPage, { edge: 0 });
+
+          registerPage.addListener(
+            "switchToLogin",
+            () => {
+              doc.removeAll();
+              doc.add(loginPage, { edge: 0 });
+            },
+            this,
+          );
+        },
+        this,
+      );
     },
   },
 });

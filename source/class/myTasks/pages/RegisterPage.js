@@ -21,7 +21,7 @@ qx.Class.define("myTasks.pages.RegisterPage", {
     });
     formContainer.add(logo);
 
-    const title = new qx.ui.basic.Label("Register as new user");
+    const title = new qx.ui.basic.Label("My Tasks");
     title.setFont(
       new qx.bom.Font().set({
         size: 24,
@@ -55,14 +55,6 @@ qx.Class.define("myTasks.pages.RegisterPage", {
     );
     switchToLoginButton.set({ alignX: "center" });
     formContainer.add(switchToLoginButton);
-    // Switch to login page event
-    switchToLoginButton.addListener(
-      "execute",
-      function () {
-        this.fireEvent("switchToLogin");
-      },
-      this,
-    );
 
     const messageLabel = new qx.ui.basic.Label("");
     messageLabel.set({
@@ -110,6 +102,7 @@ qx.Class.define("myTasks.pages.RegisterPage", {
         console.error("Register error:", error);
       }
     }
+
     // Listeners
     this.addListenerOnce(
       "appear",
@@ -132,6 +125,16 @@ qx.Class.define("myTasks.pages.RegisterPage", {
       registerFunction.call(this, fullname, username, password);
     });
 
+    // Switch to login page event
+    switchToLoginButton.addListener(
+      "execute",
+      function () {
+        this.fireEvent("switchToLogin");
+      },
+      this,
+    );
+
+    // Center form container
     formContainer.addListenerOnce(
       "appear",
       function () {
