@@ -1,11 +1,12 @@
 qx.Class.define("myTasks.pages.MainPage", {
   extend: qx.ui.container.Composite,
 
-  construct: function () {
+  construct() {
     this.base(arguments);
-
-    // Set the layout for the entire page
     this.setLayout(new qx.ui.layout.Canvas());
+
+    // User Session
+    var session = myTasks.globals.Session.getInstance();
 
     // Pages
     var mainLayout = new qx.ui.container.Composite(new qx.ui.layout.VBox(10));
@@ -28,24 +29,18 @@ qx.Class.define("myTasks.pages.MainPage", {
     var spacer = new qx.ui.core.Spacer();
     header.add(spacer, { flex: 1 });
 
-    var user = null;
-    try {
-      user = JSON.parse(localStorage.getItem("user"));
-    } catch (e) {}
-
     // Toolbar always visible, menu button shows user name if available
     var toolbar = new qx.ui.toolbar.ToolBar();
     toolbar.setBackgroundColor("transparent");
 
     var menu = new qx.ui.menu.Menu();
+    var profileButton = new qx.ui.menu.Button("My Profile");
     var logoutButton = new qx.ui.menu.Button("Logout");
+    menu.add(profileButton);
     menu.add(logoutButton);
+
     // Add dropdown icon beside label
-    var menuButton = new qx.ui.toolbar.MenuButton(
-      user && user.name ? user.name : "File",
-      null,
-      menu,
-    );
+    var menuButton = new qx.ui.toolbar.MenuButton("", null, menu);
     toolbar.add(menuButton);
     header.add(toolbar);
 
@@ -53,82 +48,107 @@ qx.Class.define("myTasks.pages.MainPage", {
     var tabView = new qx.ui.tabview.TabView();
 
     var todoTab = new qx.ui.tabview.Page("To Do");
-    var todoPage = new myTasks.pages.ToDoPage();
+    var todoPage = new myTasks.pages.ToDoPage(session.getValue());
     todoTab.setLayout(new qx.ui.layout.VBox(10));
     todoTab.add(todoPage);
     tabView.add(todoTab);
 
     var inProgressTab = new qx.ui.tabview.Page("In Progress");
-    var inProgressPage = new myTasks.pages.InProgressPage();
+    var inProgressPage = new myTasks.pages.InProgressPage(session.getValue());
     inProgressTab.setLayout(new qx.ui.layout.VBox(10));
     inProgressTab.add(inProgressPage);
     tabView.add(inProgressTab);
 
     var doneTab = new qx.ui.tabview.Page("Done");
-    var donePage = new myTasks.pages.DonePage();
+    var donePage = new myTasks.pages.DonePage(session.getValue());
     doneTab.setLayout(new qx.ui.layout.VBox(10));
     doneTab.add(donePage);
     tabView.add(doneTab);
 
+    // Profile Page
+    var profilePage = new myTasks.pages.ProfilePage(session.getValue());
+
     // Store references for cleanup
     this._menu = menu;
+    this._profileButton = profileButton;
     this._logoutButton = logoutButton;
     this._menuButton = menuButton;
 
+    // Render
+    mainLayout.add(header);
+    mainLayout.add(tabView, { flex: 1 });
+    mainLayout.add(profilePage, { flex: 1 });
+
+    profilePage.exclude();
+
+    this.add(mainLayout, { edge: 0 });
+
     // Listeners
+    // Start
     this.addListenerOnce(
       "appear",
       function () {
-        if (!localStorage.getItem("token") || !localStorage.getItem("user")) {
+        if (session == null) {
           this.fireEvent("logout");
           return;
         }
 
-        const user = JSON.parse(localStorage.getItem("user"));
-        if (user?.name) {
-          menuButton.setLabel(user.name);
+        if (session.getValue().user?.name) {
+          menuButton.setLabel(session.getValue().user.name);
         }
 
         // Ensure the menu is properly initialized
-        // @ts-ignore
         if (!menu.isDisposed()) {
           menu.removeAll();
+          menu.add(profileButton);
           menu.add(logoutButton);
         }
       },
       this,
     );
 
+    // Open Profile Form
+    profileButton.addListener(
+      "execute",
+      function () {
+        tabView.exclude();
+        profilePage.show();
+      },
+      this,
+    );
+
+    // Close Profile Form
+    profilePage.addListener("changeCloseForm", function (e) {
+      if (e.getData() === true) {
+        tabView.show();
+        profilePage.exclude();
+      }
+    });
+
+    // Logout
     logoutButton.addListener(
       "execute",
       function () {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+        myTasks.globals.Session.getInstance().clearUserSession();
         this.fireEvent("logout");
       },
       this,
     );
 
     // Clean up event listeners and menu on dispose
-    // @ts-ignore
     this.addListener("dispose", function () {
-      // @ts-ignore
+      if (profileButton && !profileButton.isDisposed()) {
+        profileButton.removeAllListeners();
+      }
+
       if (logoutButton && !logoutButton.isDisposed()) {
-        // @ts-ignore
         logoutButton.removeAllListeners();
       }
-      // @ts-ignore
+
       if (menu && !menu.isDisposed()) {
         menu.removeAll();
       }
     });
-
-    // Render
-    mainLayout.add(header);
-    mainLayout.add(tabView, { flex: 1 });
-
-    // @ts-ignore
-    this.add(mainLayout, { edge: 0 });
   },
 
   events: {

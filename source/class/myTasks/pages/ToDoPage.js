@@ -1,7 +1,7 @@
 qx.Class.define("myTasks.pages.ToDoPage", {
   extend: qx.ui.container.Composite,
 
-  construct() {
+  construct: function (session) {
     this.base(arguments);
     this.setLayout(new qx.ui.layout.Canvas());
 
@@ -44,27 +44,16 @@ qx.Class.define("myTasks.pages.ToDoPage", {
     this.add(layout, { edge: 0 });
 
     // Functions
-    // GET
     async function FetchData() {
       try {
-        // Check if user exists and has an id before fetching
-        const userStr = localStorage.getItem("user");
-        if (!userStr) {
-          console.warn("No user found in localStorage");
-          tableModel.setData([]);
-          return [];
-        }
-
-        const user = JSON.parse(userStr);
-        if (!user || !user.id) {
-          console.warn("User ID is missing");
+        if (!session.user.id) {
+          console.error("User session is invalid or missing.");
           tableModel.setData([]);
           return [];
         }
 
         const url =
-          "http://localhost:3000/tasks.php?status=0&user_id=" + user.id;
-        console.log("Fetching tasks from URL:", url);
+          "http://localhost:3000/tasks.php?status=0&user_id=" + session.user.id;
         const response = await fetch(url);
 
         if (!response.ok) {
@@ -84,11 +73,6 @@ qx.Class.define("myTasks.pages.ToDoPage", {
         ]);
 
         tableModel.setData(tableData);
-
-        // Update global store
-        if (myTasks.globals.Tasks.getInstance) {
-          myTasks.globals.Tasks.getInstance().setValue(tableData);
-        }
 
         return tableData;
       } catch (error) {

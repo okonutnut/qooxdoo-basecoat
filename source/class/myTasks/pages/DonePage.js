@@ -1,9 +1,8 @@
 qx.Class.define("myTasks.pages.DonePage", {
   extend: qx.ui.container.Composite,
 
-  construct() {
+  construct: function (session) {
     this.base(arguments);
-
     this.setLayout(new qx.ui.layout.Canvas());
 
     var layout = new qx.ui.container.Composite(new qx.ui.layout.VBox(10));
@@ -45,25 +44,18 @@ qx.Class.define("myTasks.pages.DonePage", {
     // Fetch tasks from API
     async function fetchDoneTasks() {
       try {
-        // Check if user exists and has an id before fetching
-        const userStr = localStorage.getItem("user");
-        if (!userStr) {
-          console.warn("No user found in localStorage");
-          tableModel.setData([]);
-          return [];
-        }
-
-        const user = JSON.parse(userStr);
-        if (!user || !user.id) {
-          console.warn("User ID is missing");
+        if (!session) {
           tableModel.setData([]);
           return [];
         }
 
         const response = await fetch(
-          "http://localhost:3000/tasks.php?status=2&user_id=" + user.id,
+          "http://localhost:3000/tasks.php?status=2&user_id=" + session.user.id,
         );
-        if (!response.ok) throw new Error("Failed to fetch done tasks");
+        if (!response.ok) {
+          tableModel.setData([]);
+          throw new Error("Failed to fetch done tasks");
+        }
         const data = await response.json();
         // Map to table model format
         const tableData = data.map((task) => [

@@ -46,7 +46,7 @@ try {
     $stmt->execute([
         $data['fullname'],
         $data['username'],
-        $data['password']
+        password_hash($data['password'], PASSWORD_DEFAULT)
     ]);
     $user_id = $pdo->lastInsertId();
     $user = [

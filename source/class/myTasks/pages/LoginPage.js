@@ -36,10 +36,12 @@ qx.Class.define("myTasks.pages.LoginPage", {
 
     const usernameField = new qx.ui.form.TextField();
     usernameField.setPlaceholder("Username");
+    usernameField.setValue("darlito");
     formContainer.add(usernameField);
 
     const passwordField = new qx.ui.form.PasswordField();
     passwordField.setPlaceholder("Password");
+    passwordField.setValue("dar123");
     formContainer.add(passwordField);
 
     const loginButton = new qx.ui.form.Button("Login");
@@ -71,7 +73,7 @@ qx.Class.define("myTasks.pages.LoginPage", {
     this._add(formContainer, { left: "50%", top: "50%" });
 
     // Functions
-    async function loginFunction(username, password) {
+    async function Login(username, password) {
       try {
         const response = await fetch("http://localhost:3000/login.php", {
           method: "POST",
@@ -88,9 +90,10 @@ qx.Class.define("myTasks.pages.LoginPage", {
         const result = await response.json();
 
         if (result.user) {
+          var session = myTasks.globals.Session.getInstance();
+          session.setUserSession(result.user);
+
           this.setLoggedIn(true);
-          localStorage.setItem("token", result.token);
-          localStorage.setItem("user", JSON.stringify(result.user));
 
           usernameField.setValue("");
           passwordField.setValue("");
@@ -105,12 +108,12 @@ qx.Class.define("myTasks.pages.LoginPage", {
         console.error("Login error:", error);
       }
     }
+
     // Listeners
     this.addListenerOnce(
       "appear",
       function () {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+        myTasks.globals.Session.getInstance().clearUserSession();
       },
       this,
     );
@@ -119,7 +122,7 @@ qx.Class.define("myTasks.pages.LoginPage", {
       const username = usernameField.getValue();
       const password = passwordField.getValue();
 
-      loginFunction.call(this, username, password);
+      Login.call(this, username, password);
     });
 
     formContainer.addListenerOnce(

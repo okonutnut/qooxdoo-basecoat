@@ -36,7 +36,7 @@ $stmt = $pdo->prepare("SELECT id, username, password, name FROM users WHERE user
 $stmt->execute([$data['username']]);
 $user = $stmt->fetch();
 
-if (!$user || $data['password'] !== $user['password']) {
+if (!$user || !password_verify($data['password'], $user['password'])) {
     http_response_code(401);
     echo json_encode(["error" => "Invalid credentials"]);
     exit;

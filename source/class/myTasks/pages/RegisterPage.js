@@ -3,7 +3,6 @@ qx.Class.define("myTasks.pages.RegisterPage", {
 
   construct() {
     this.base(arguments);
-
     this._setLayout(new qx.ui.layout.Canvas());
 
     const formContainer = new qx.ui.container.Composite(
@@ -80,8 +79,8 @@ qx.Class.define("myTasks.pages.RegisterPage", {
         const result = await response.json();
 
         if (response.ok && result.user && result.token) {
-          localStorage.setItem("token", result.token);
-          localStorage.setItem("user", JSON.stringify(result.user));
+          var session = myTasks.globals.Session.getInstance();
+          session.setUserSession(result.user);
 
           messageLabel.setValue("Registration successful! Redirecting...");
           setTimeout(() => {
@@ -107,8 +106,7 @@ qx.Class.define("myTasks.pages.RegisterPage", {
     this.addListenerOnce(
       "appear",
       function () {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+        myTasks.globals.Session.getInstance().clearUserSession();
       },
       this,
     );

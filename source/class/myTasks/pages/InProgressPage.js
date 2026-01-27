@@ -1,9 +1,8 @@
 qx.Class.define("myTasks.pages.InProgressPage", {
   extend: qx.ui.container.Composite,
 
-  construct() {
+  construct: function (session) {
     this.base(arguments);
-
     this.setLayout(new qx.ui.layout.Canvas());
 
     var layout = new qx.ui.container.Composite(new qx.ui.layout.VBox(10));
@@ -44,26 +43,20 @@ qx.Class.define("myTasks.pages.InProgressPage", {
     // Fetch tasks from API
     async function fetchInProgressTasks() {
       try {
-        // Check if user exists and has an id before fetching
-        const userStr = localStorage.getItem("user");
-        if (!userStr) {
-          console.warn("No user found in localStorage");
-          tableModel.setData([]);
-          return [];
-        }
-
-        const user = JSON.parse(userStr);
-        if (!user || !user.id) {
-          console.warn("User ID is missing");
+        if (!session) {
           tableModel.setData([]);
           return [];
         }
 
         const response = await fetch(
-          "http://localhost:3000/tasks.php?status=1&user_id=" + user.id,
+          "http://localhost:3000/tasks.php?status=1&user_id=" + session.user.id,
         );
 
-        if (!response.ok) throw new Error("Failed to fetch in-progress tasks");
+        if (!response.ok) {
+          tableModel.setData([]);
+          throw new Error("Failed to fetch in-progress tasks");
+        }
+
         const data = await response.json();
         // Map to table model format
         const tableData = data.map((task) => [
@@ -73,7 +66,9 @@ qx.Class.define("myTasks.pages.InProgressPage", {
           task.priority_level,
           task.status,
         ]);
+
         tableModel.setData(tableData);
+
         return tableData;
       } catch (error) {
         console.error(error);

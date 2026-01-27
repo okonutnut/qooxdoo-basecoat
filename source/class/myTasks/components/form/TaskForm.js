@@ -5,6 +5,8 @@ qx.Class.define("myTasks.components.form.TaskForm", {
     this.base(arguments);
     this.setLayout(new qx.ui.layout.Canvas());
 
+    var session = myTasks.global.Session.getInstance();
+
     var isAdd = taskObj == null || taskObj == undefined;
     var isTodo = taskObj?.status === "0";
 
@@ -63,7 +65,7 @@ qx.Class.define("myTasks.components.form.TaskForm", {
     submitButton.addListener(
       "execute",
       () => {
-        var user_id = JSON.parse(localStorage.getItem("user")).id;
+        var user_id = session ? session.getValue().user.id : null;
         var taskName = taskField.getValue();
         var dueDate = dueDateDateField.getValue();
         var priority = prioritySelectBox.getSelection()[0].getLabel();
