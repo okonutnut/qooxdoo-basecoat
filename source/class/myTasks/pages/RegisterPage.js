@@ -48,7 +48,6 @@ qx.Class.define("myTasks.pages.RegisterPage", {
     const registerButton = new qx.ui.form.Button("Register");
     formContainer.add(registerButton);
 
-    // Switch to Login button
     const switchToLoginButton = new qx.ui.form.Button(
       "Already have an account? Login",
     );
@@ -66,7 +65,7 @@ qx.Class.define("myTasks.pages.RegisterPage", {
     this._add(formContainer, { left: "50%", top: "50%" });
 
     // Register function
-    async function registerFunction(fullname, username, password) {
+    const register = async (fullname, username, password) => {
       try {
         const response = await fetch("http://localhost:3000/register.php", {
           method: "POST",
@@ -79,7 +78,7 @@ qx.Class.define("myTasks.pages.RegisterPage", {
         const result = await response.json();
 
         if (response.ok && result.user && result.token) {
-          var session = myTasks.globals.Session.getInstance();
+          const session = myTasks.globals.Session.getInstance();
           session.setUserSession(result.user);
 
           messageLabel.setValue("Registration successful! Redirecting...");
@@ -95,7 +94,7 @@ qx.Class.define("myTasks.pages.RegisterPage", {
         messageLabel.setValue("Registration failed. Please try again.");
         console.error("Register error:", error);
       }
-    }
+    };
 
     // Listeners
     this.addListenerOnce(
@@ -115,10 +114,9 @@ qx.Class.define("myTasks.pages.RegisterPage", {
         messageLabel.setValue("All fields are required.");
         return;
       }
-      registerFunction.call(this, fullname, username, password);
+      register(fullname, username, password);
     });
 
-    // Switch to login page event
     switchToLoginButton.addListener(
       "execute",
       function () {
@@ -127,11 +125,10 @@ qx.Class.define("myTasks.pages.RegisterPage", {
       this,
     );
 
-    // Center form container
     formContainer.addListenerOnce(
       "appear",
       function () {
-        var bounds = formContainer.getBounds();
+        const bounds = formContainer.getBounds();
         formContainer.setLayoutProperties({
           left: Math.round((this.getBounds().width - bounds.width) / 2),
           top: Math.round((this.getBounds().height - bounds.height) / 2),

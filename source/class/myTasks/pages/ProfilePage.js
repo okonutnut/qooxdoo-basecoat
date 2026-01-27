@@ -1,14 +1,13 @@
 qx.Class.define("myTasks.pages.ProfilePage", {
   extend: qx.ui.container.Composite,
 
-  construct: function (session) {
+  construct(session) {
     this.base(arguments);
     this.setLayout(new qx.ui.layout.Canvas());
 
-    var layout = new qx.ui.container.Composite(new qx.ui.layout.VBox(10));
+    const layout = new qx.ui.container.Composite(new qx.ui.layout.VBox(10));
 
-    // Page Title
-    var pageTitle = new qx.ui.basic.Label("Profile Page");
+    const pageTitle = new qx.ui.basic.Label("Profile Page");
     pageTitle.setFont(
       new qx.bom.Font().set({
         size: 20,
@@ -16,11 +15,9 @@ qx.Class.define("myTasks.pages.ProfilePage", {
       }),
     );
 
-    // Form
-    var userProfileForm = new myTasks.components.form.UserProfileForm(session);
+    const userProfileForm = new myTasks.components.form.UserProfileForm(session);
 
-    // Cancel Button Listener to close the form
-    var closeButton = new qx.ui.form.Button("Close");
+    const closeButton = new qx.ui.form.Button("Close");
 
     // Render
     layout.add(pageTitle);

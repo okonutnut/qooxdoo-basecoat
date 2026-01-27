@@ -6,18 +6,18 @@ qx.Class.define("myTasks.pages.MainPage", {
     this.setLayout(new qx.ui.layout.Canvas());
 
     // User Session
-    var session = myTasks.globals.Session.getInstance();
+    const session = myTasks.globals.Session.getInstance();
 
     // Pages
-    var mainLayout = new qx.ui.container.Composite(new qx.ui.layout.VBox(10));
+    const mainLayout = new qx.ui.container.Composite(new qx.ui.layout.VBox(10));
 
     // Header
-    var header = new qx.ui.container.Composite(
+    const header = new qx.ui.container.Composite(
       new qx.ui.layout.HBox(10, "center"),
     );
     header.setDecorator("main");
 
-    var title = new qx.ui.basic.Label("My Tasks");
+    const title = new qx.ui.basic.Label("My Tasks");
     title.setFont(
       new qx.bom.Font().set({
         size: 24,
@@ -26,47 +26,43 @@ qx.Class.define("myTasks.pages.MainPage", {
     );
     header.add(title);
 
-    var spacer = new qx.ui.core.Spacer();
+    const spacer = new qx.ui.core.Spacer();
     header.add(spacer, { flex: 1 });
 
     // Toolbar always visible, menu button shows user name if available
-    var toolbar = new qx.ui.toolbar.ToolBar();
+    const toolbar = new qx.ui.toolbar.ToolBar();
     toolbar.setBackgroundColor("transparent");
 
-    var menu = new qx.ui.menu.Menu();
-    var profileButton = new qx.ui.menu.Button("My Profile");
-    var logoutButton = new qx.ui.menu.Button("Logout");
+    const menu = new qx.ui.menu.Menu();
+    const profileButton = new qx.ui.menu.Button("My Profile");
+    const logoutButton = new qx.ui.menu.Button("Logout");
     menu.add(profileButton);
     menu.add(logoutButton);
 
-    // Add dropdown icon beside label
-    var menuButton = new qx.ui.toolbar.MenuButton("", null, menu);
+    const menuButton = new qx.ui.toolbar.MenuButton("", null, menu);
     toolbar.add(menuButton);
     header.add(toolbar);
 
     // Tab View
-    var tabView = new qx.ui.tabview.TabView();
+    const tabView = new qx.ui.tabview.TabView();
 
-    var todoTab = new qx.ui.tabview.Page("To Do");
-    var todoPage = new myTasks.tabs.ToDoTab(session.getValue());
-    todoTab.setLayout(new qx.ui.layout.VBox(10));
-    todoTab.add(todoPage);
-    tabView.add(todoTab);
+    // Create tabs
+    const tabs = [
+      { label: "To Do", pageClass: myTasks.tabs.ToDoTab },
+      { label: "In Progress", pageClass: myTasks.tabs.InProgressTab },
+      { label: "Done", pageClass: myTasks.tabs.DoneTab },
+    ];
 
-    var inProgressTab = new qx.ui.tabview.Page("In Progress");
-    var inProgressPage = new myTasks.tabs.InProgressTab(session.getValue());
-    inProgressTab.setLayout(new qx.ui.layout.VBox(10));
-    inProgressTab.add(inProgressPage);
-    tabView.add(inProgressTab);
-
-    var doneTab = new qx.ui.tabview.Page("Done");
-    var donePage = new myTasks.tabs.DoneTab(session.getValue());
-    doneTab.setLayout(new qx.ui.layout.VBox(10));
-    doneTab.add(donePage);
-    tabView.add(doneTab);
+    tabs.forEach(({ label, pageClass }) => {
+      const tabPage = new qx.ui.tabview.Page(label);
+      const page = new pageClass(session.getValue());
+      tabPage.setLayout(new qx.ui.layout.VBox(10));
+      tabPage.add(page);
+      tabView.add(tabPage);
+    });
 
     // Profile Page
-    var profilePage = new myTasks.pages.ProfilePage(session.getValue());
+    const profilePage = new myTasks.pages.ProfilePage(session.getValue());
 
     // Store references for cleanup
     this._menu = menu;
@@ -84,17 +80,17 @@ qx.Class.define("myTasks.pages.MainPage", {
     this.add(mainLayout, { edge: 0 });
 
     // Listeners
-    // Start
     this.addListenerOnce(
       "appear",
       function () {
-        if (session == null) {
+        const sessionValue = session.getValue();
+        if (!sessionValue || !sessionValue.user) {
           this.fireEvent("logout");
           return;
         }
 
-        if (session.getValue().user?.name) {
-          menuButton.setLabel(session.getValue().user.name);
+        if (sessionValue.user?.name) {
+          menuButton.setLabel(sessionValue.user.name);
         }
 
         // Ensure the menu is properly initialized

@@ -1,39 +1,36 @@
 qx.Class.define("myTasks.tabs.DoneTab", {
   extend: qx.ui.container.Composite,
 
-  construct: function (session) {
+  construct(session) {
     this.base(arguments);
     this.setLayout(new qx.ui.layout.Canvas());
 
-    var layout = new qx.ui.container.Composite(new qx.ui.layout.VBox(10));
+    const layout = new qx.ui.container.Composite(new qx.ui.layout.VBox(10));
 
-    var headerLayout = new qx.ui.layout.HBox(10);
+    const headerLayout = new qx.ui.layout.HBox(10);
     headerLayout.setAlignY("middle");
-    var header = new qx.ui.container.Composite(headerLayout);
+    const header = new qx.ui.container.Composite(headerLayout);
 
-    var refreshButton = new qx.ui.form.Button("Refresh");
+    const refreshButton = new qx.ui.form.Button("Refresh");
     header.add(refreshButton);
 
-    var spacer = new qx.ui.core.Spacer();
+    const spacer = new qx.ui.core.Spacer();
     header.add(spacer, { flex: 1 });
 
-    var searchField = new qx.ui.form.TextField();
-    // var searchField = new myTasks.components.ui.TextField("Search Tasks...");
+    const searchField = new qx.ui.form.TextField();
     searchField.setPlaceholder("Search Tasks...");
     searchField.setWidth(200);
     header.add(searchField);
 
-    // Table
-    var tableModel = new qx.ui.table.model.Simple();
+    const tableModel = new qx.ui.table.model.Simple();
     tableModel.setColumns(
       ["ID", "Task", "Due Date", "Priority", "Status"],
       ["id", "name", "due_date", "priority_level", "status"],
     );
     tableModel.setData([]);
-    var table = new myTasks.components.DataTable(tableModel);
+    const table = new myTasks.components.DataTable(tableModel);
 
-    // Window
-    var window = new myTasks.components.Window("Task Details");
+    const window = new myTasks.components.Window("Task Details");
     window.setLayout(new qx.ui.layout.Canvas());
 
     // Render
@@ -42,7 +39,7 @@ qx.Class.define("myTasks.tabs.DoneTab", {
     this.add(layout, { edge: 0 });
 
     // Fetch tasks from API
-    async function fetchDoneTasks() {
+    const fetchDoneTasks = async () => {
       try {
         if (!session) {
           tableModel.setData([]);
@@ -57,7 +54,6 @@ qx.Class.define("myTasks.tabs.DoneTab", {
           throw new Error("Failed to fetch done tasks");
         }
         const data = await response.json();
-        // Map to table model format
         const tableData = data.map((task) => [
           task.id,
           task.name,
@@ -72,37 +68,34 @@ qx.Class.define("myTasks.tabs.DoneTab", {
         tableModel.setData([]);
         return [];
       }
-    }
+    };
 
     // Initial load
     fetchDoneTasks();
 
     // Listeners
-    // Update form when a table row is clicked
     table.addListener(
       "cellTap",
       (e) => {
-        var row = e.getRow();
-        var model = table.getTableModel();
+        const row = e.getRow();
+        const model = table.getTableModel();
 
-        var id = model.getValue(0, row);
-        var name = model.getValue(1, row);
-        var due_date = model.getValue(2, row);
-        var priority_level = model.getValue(3, row);
-        var status = model.getValue(4, row);
+        const id = model.getValue(0, row);
+        const name = model.getValue(1, row);
+        const due_date = model.getValue(2, row);
+        const priority_level = model.getValue(3, row);
+        const status = model.getValue(4, row);
 
-        // Create form with pre-filled data
-        var taskObj = {
+        const taskObj = {
           name,
           due_date,
           priority_level,
           status,
           id,
         };
-        var editForm = new myTasks.components.form.TaskForm(taskObj);
+        const editForm = new myTasks.components.form.TaskForm(taskObj);
         window.removeAll();
         window.add(editForm, { edge: 0 });
-        // Update table on task modification
         editForm.addListener(
           "changeIsAdded",
           async () => {
@@ -117,7 +110,6 @@ qx.Class.define("myTasks.tabs.DoneTab", {
       this,
     );
 
-    // Refresh button listener
     refreshButton.addListener(
       "execute",
       async () => {
@@ -126,14 +118,13 @@ qx.Class.define("myTasks.tabs.DoneTab", {
       this,
     );
 
-    // Search functionality
     searchField.addListener(
       "input",
       async () => {
-        var filter = searchField.getValue().toLowerCase();
+        const filter = searchField.getValue().toLowerCase();
         const allTasks = await fetchDoneTasks();
-        var filteredData = allTasks.filter((row) =>
-          row[0].toLowerCase().includes(filter),
+        const filteredData = allTasks.filter((row) =>
+          row[1].toLowerCase().includes(filter),
         );
         tableModel.setData(filteredData);
       },

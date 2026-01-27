@@ -45,20 +45,11 @@ qx.Class.define("myTasks.pages.LoginPage", {
     const loginButton = new qx.ui.form.Button("Login");
     formContainer.add(loginButton);
 
-    // Switch to Register button
     const switchToRegisterButton = new qx.ui.form.Button(
       "Don't have an account? Register",
     );
     switchToRegisterButton.set({ alignX: "center" });
     formContainer.add(switchToRegisterButton);
-    // Switch to register page event
-    switchToRegisterButton.addListener(
-      "execute",
-      function () {
-        this.fireEvent("switchToRegister");
-      },
-      this,
-    );
 
     const messageLabel = new qx.ui.basic.Label("");
     messageLabel.set({
@@ -70,8 +61,8 @@ qx.Class.define("myTasks.pages.LoginPage", {
     // Render
     this._add(formContainer, { left: "50%", top: "50%" });
 
-    // Functions
-    async function Login(username, password) {
+    // Login function
+    const login = async (username, password) => {
       try {
         const response = await fetch("http://localhost:3000/login.php", {
           method: "POST",
@@ -85,10 +76,11 @@ qx.Class.define("myTasks.pages.LoginPage", {
           messageLabel.setValue("Login failed. Please try again.");
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
+
         const result = await response.json();
 
         if (result.user) {
-          var session = myTasks.globals.Session.getInstance();
+          const session = myTasks.globals.Session.getInstance();
           session.setUserSession(result.user);
 
           this.setLoggedIn(true);
@@ -105,7 +97,7 @@ qx.Class.define("myTasks.pages.LoginPage", {
         messageLabel.setValue("Login failed. Please try again.");
         console.error("Login error:", error);
       }
-    }
+    };
 
     // Listeners
     this.addListenerOnce(
@@ -119,14 +111,21 @@ qx.Class.define("myTasks.pages.LoginPage", {
     loginButton.addListener("execute", () => {
       const username = usernameField.getValue();
       const password = passwordField.getValue();
-
-      Login.call(this, username, password);
+      login(username, password);
     });
+
+    switchToRegisterButton.addListener(
+      "execute",
+      function () {
+        this.fireEvent("switchToRegister");
+      },
+      this,
+    );
 
     formContainer.addListenerOnce(
       "appear",
       function () {
-        var bounds = formContainer.getBounds();
+        const bounds = formContainer.getBounds();
         formContainer.setLayoutProperties({
           left: Math.round((this.getBounds().width - bounds.width) / 2),
           top: Math.round((this.getBounds().height - bounds.height) / 2),

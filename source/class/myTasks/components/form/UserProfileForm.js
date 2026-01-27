@@ -1,27 +1,27 @@
 qx.Class.define("myTasks.components.form.UserProfileForm", {
   extend: qx.ui.container.Composite,
 
-  construct: function (session) {
+  construct(session) {
     this.base(arguments);
     this.setLayout(new qx.ui.layout.Canvas());
 
-    var formLayout = new qx.ui.container.Composite(new qx.ui.layout.VBox(10));
+    const formLayout = new qx.ui.container.Composite(new qx.ui.layout.VBox(10));
 
-    var fullnameLabel = new qx.ui.basic.Label("Fullname:");
-    var fullnameField = new qx.ui.form.TextField();
+    const fullnameLabel = new qx.ui.basic.Label("Fullname:");
+    const fullnameField = new qx.ui.form.TextField();
     fullnameField.setValue(session ? session.user.name : "");
 
-    var usernameLabel = new qx.ui.basic.Label("Username:");
-    var usernameField = new qx.ui.form.TextField();
+    const usernameLabel = new qx.ui.basic.Label("Username:");
+    const usernameField = new qx.ui.form.TextField();
     usernameField.setValue(session ? session.user.username : "");
 
-    var passwordLabel = new qx.ui.basic.Label("Password:");
-    var passwordField = new qx.ui.form.PasswordField();
+    const passwordLabel = new qx.ui.basic.Label("Password:");
+    const passwordField = new qx.ui.form.PasswordField();
 
-    var confirmLabel = new qx.ui.basic.Label("Confirm Password:");
-    var confirmField = new qx.ui.form.PasswordField();
+    const confirmLabel = new qx.ui.basic.Label("Confirm Password:");
+    const confirmField = new qx.ui.form.PasswordField();
 
-    var submitButton = new qx.ui.form.Button("Submit");
+    const submitButton = new qx.ui.form.Button("Submit");
 
     formLayout.add(fullnameLabel);
     formLayout.add(fullnameField);
@@ -35,9 +35,8 @@ qx.Class.define("myTasks.components.form.UserProfileForm", {
 
     this.add(formLayout, { edge: 0 });
 
-    // Functions
-    // PUT
-    async function UpdateProfile(data) {
+    // Update profile function
+    const updateProfile = async (data) => {
       try {
         console.log("Updating profile with data:", data);
         const response = await fetch(
@@ -68,30 +67,30 @@ qx.Class.define("myTasks.components.form.UserProfileForm", {
         console.error("Failed to update profile:", error);
         alert("An error occurred while updating the profile.");
       }
-    }
+    };
 
     // Listeners
     submitButton.addListener(
       "execute",
       async function () {
-        var fullname = fullnameField.getValue();
-        var username = usernameField.getValue();
-        var password = passwordField.getValue();
-        var confirm = confirmField.getValue();
+        const fullname = fullnameField.getValue();
+        const username = usernameField.getValue();
+        const password = passwordField.getValue();
+        const confirm = confirmField.getValue();
 
         if (password !== confirm) {
           alert("Passwords do not match!");
           return;
         }
 
-        var payload = {
+        const payload = {
           id: session ? session.user.id : null,
           fullname,
           username,
           password,
         };
 
-        await UpdateProfile(payload);
+        await updateProfile(payload);
       },
       this,
     );

@@ -42,6 +42,30 @@ qx.Class.define("myTasks.Application", {
       let registerPage = null;
       let mainPage = null;
 
+      // Helper to setup logout handler
+      const setupLogoutHandler = () => {
+        mainPage.addListener("logout", () => {
+          doc.removeAll();
+          loginPage.setLoggedIn(false);
+          if (mainPage && !mainPage.isDisposed()) {
+            mainPage.dispose();
+          }
+          mainPage = null;
+          doc.add(loginPage, { edge: 0 });
+        });
+      };
+
+      // Helper to create and show main page
+      const showMainPage = () => {
+        doc.removeAll();
+        if (mainPage && !mainPage.isDisposed()) {
+          mainPage.dispose();
+        }
+        mainPage = new myTasks.pages.MainPage();
+        doc.add(mainPage, { edge: 0 });
+        setupLogoutHandler();
+      };
+
       // Default page: show login first
       doc.add(loginPage, { edge: 0 });
 
@@ -49,28 +73,8 @@ qx.Class.define("myTasks.Application", {
       loginPage.addListener(
         "changeLoggedIn",
         (e) => {
-          if (e.getData() == true) {
-            doc.removeAll();
-
-            // Dispose the old mainPage if it exists
-            if (mainPage && !mainPage.isDisposed()) {
-              mainPage.dispose();
-            }
-
-            // Create a new mainPage instance each time
-            mainPage = new myTasks.pages.MainPage();
-            doc.add(mainPage, { edge: 0 });
-
-            mainPage.addListener("logout", () => {
-              doc.removeAll();
-              loginPage.setLoggedIn(false);
-              // Dispose mainPage when logging out
-              if (mainPage && !mainPage.isDisposed()) {
-                mainPage.dispose();
-              }
-              mainPage = null;
-              doc.add(loginPage, { edge: 0 });
-            });
+          if (e.getData()) {
+            showMainPage();
           }
         },
         this,
@@ -98,25 +102,7 @@ qx.Class.define("myTasks.Application", {
 
           // After successful registration, redirect to main page
           registerPage.addListener("registered", () => {
-            doc.removeAll();
-            // Dispose the old mainPage if it exists
-            if (mainPage && !mainPage.isDisposed()) {
-              mainPage.dispose();
-            }
-            // Create a new mainPage instance each time
-            mainPage = new myTasks.pages.MainPage();
-            doc.add(mainPage, { edge: 0 });
-
-            mainPage.addListener("logout", () => {
-              doc.removeAll();
-              loginPage.setLoggedIn(false);
-              // Dispose mainPage when logging out
-              if (mainPage && !mainPage.isDisposed()) {
-                mainPage.dispose();
-              }
-              mainPage = null;
-              doc.add(loginPage, { edge: 0 });
-            });
+            showMainPage();
           });
         },
         this,
