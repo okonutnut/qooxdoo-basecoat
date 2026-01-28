@@ -32,28 +32,33 @@ qx.Class.define("myTasks.components.export.ExportPdf", {
     },
 
     // Ensure pdfMake + Roboto fonts
-    _ensurePdfMake() {
-      return new Promise((resolve, reject) => {
-        (async () => {
-          try {
-            if (!window.pdfMake) {
-              await this._loadScript(
-                "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.12/pdfmake.min.js",
-              );
-            }
+    async _ensurePdfMake() {
+      try {
+        // Load pdfMake if not already loaded
+        if (!window.pdfMake) {
+          await this._loadScript(
+            "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.12/pdfmake.min.js",
+          );
+        }
 
-            if (typeof window.pdfMake.addVirtualFileSystem === "function") {
-              await this._loadScript(
-                "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.12/vfs_fonts.js",
-              );
-            }
+        // Always load fonts - vfs_fonts.js sets up the virtual file system
+        // Check if fonts are already available
+        if (!window.pdfMake || !window.pdfMake.vfs || !window.pdfMake.fonts || !window.pdfMake.fonts.Roboto) {
+          await this._loadScript(
+            "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.12/vfs_fonts.js",
+          );
+          // Wait for fonts to be registered
+          await new Promise((resolve) => setTimeout(resolve, 200));
+        }
 
-            resolve();
-          } catch (e) {
-            reject(e);
-          }
-        })();
-      });
+        // Verify pdfMake is ready
+        if (!window.pdfMake || typeof window.pdfMake.createPdf !== "function") {
+          throw new Error("pdfMake failed to load properly");
+        }
+      } catch (e) {
+        console.error("Error loading pdfMake:", e);
+        throw e;
+      }
     },
 
     _onExport() {
@@ -62,6 +67,7 @@ qx.Class.define("myTasks.components.export.ExportPdf", {
           const data = this.getExportData();
 
           if (!Array.isArray(data) || data.length === 0) {
+            console.warn("No data available to export");
             pdfMake
               .createPdf({ content: [{ text: "No data to display" }] })
               .open();
@@ -72,6 +78,7 @@ qx.Class.define("myTasks.components.export.ExportPdf", {
         })
         .catch((err) => {
           console.error("PDF preview failed:", err);
+          alert("Failed to generate PDF. Please check the browser console for details.");
         });
     },
 
@@ -128,7 +135,11 @@ qx.Class.define("myTasks.components.export.ExportPdf", {
       };
 
       console.log("Opening print preview...");
-      pdfMake.createPdf(docDefinition).open();
+      const pdfDoc = pdfMake.createPdf(docDefinition);
+      
+      // Open PDF in new window for printing
+      // Users can use browser's print dialog (Ctrl+P) from the PDF viewer
+      pdfDoc.open();
     },
   },
 });
