@@ -25,6 +25,15 @@ qx.Class.define("myTasks.tabs.ToDoTab", {
     searchField.setWidth(200);
     header.add(searchField);
 
+    const exportExcelButton = new myTasks.components.export.ExportExcel();
+    exportExcelButton.setFileName(
+      "tasks_report_" + new Date().toISOString() + ".xlsx",
+    );
+    header.add(exportExcelButton);
+
+    const exportPdfButton = new myTasks.components.export.ExportPdf();
+    header.add(exportPdfButton);
+
     const tableModel = new qx.ui.table.model.Simple();
     tableModel.setColumns(
       ["ID", "Task", "Due Date", "Priority", "Status"],
@@ -68,8 +77,25 @@ qx.Class.define("myTasks.tabs.ToDoTab", {
           task.priority_level,
           task.status,
         ]);
-
         tableModel.setData(tableData);
+
+        const exportData = data.map((task) => ({
+          ID: task.id,
+          Fullname: task.user_name,
+          Task: task.name,
+          "Due Date": task.due_date,
+          Priority: task.priority_level,
+          Status:
+            task.status === 0
+              ? "To Do"
+              : task.status === 1
+                ? "In Progress"
+                : "Done",
+        }));
+        console.log(exportData);
+        exportPdfButton.setExportData(exportData);
+        exportExcelButton.setExportData(exportData);
+
         return tableData;
       } catch (error) {
         console.error("Error fetching tasks:", error);

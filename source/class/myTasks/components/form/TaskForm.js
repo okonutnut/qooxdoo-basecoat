@@ -8,7 +8,7 @@ qx.Class.define("myTasks.components.form.TaskForm", {
     const session = myTasks.globals.Session.getInstance();
 
     const isAdd = !taskObj;
-    const isTodo = taskObj?.status === "0";
+    const isTodo = taskObj?.status === 0;
 
     const formLayout = new qx.ui.container.Composite(new qx.ui.layout.VBox(10));
 
@@ -50,13 +50,13 @@ qx.Class.define("myTasks.components.form.TaskForm", {
     if (isAdd) {
       formLayout.add(submitButton);
     } else {
-      if (taskObj?.status === "0") {
+      if (taskObj?.status === 0) {
         formLayout.add(submitButton);
         formLayout.add(markAsInProgressButton);
         formLayout.add(deleteButton);
-      } else if (taskObj?.status === "1") {
+      } else if (taskObj?.status === 1) {
         formLayout.add(markAsDoneButton);
-      } else if (taskObj?.status === "2") {
+      } else if (taskObj?.status === 2) {
         formLayout.add(deleteButton);
       }
     }

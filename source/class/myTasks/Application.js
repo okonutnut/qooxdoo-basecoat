@@ -37,6 +37,31 @@ qx.Class.define("myTasks.Application", {
       }
       const doc = this.getRoot();
 
+      // Scripts
+      /* const loader = new qx.util.DynamicScriptLoader([
+        "resource/myTasks/lib/exceljs.min.js", // ExcelJS library
+        "resource/myTasks/lib/pdfmake.min.js", // PDFMake library
+        "resource/myTasks/lib/vfs_fonts.js", // PDFMake fonts
+      ]);
+
+      loader.addListener("ready", function () {
+        console.log("ExcelJS loaded:", window.ExcelJS);
+        console.log("ExcelJS loaded:", window.pdfMake);
+        if (!window.pdfMake.vfs) {
+          console.error(
+            "pdfMake.vfs not defined! vfs_fonts.js may not be loaded correctly.",
+          );
+        } else {
+          console.log("pdfMake.vfs is ready, fonts available.");
+        }
+      });
+
+      loader.addListener("failed", function (e) {
+        console.error("Failed to load:", e.getData());
+      });
+
+      loader.start(); */
+
       // Pages
       let loginPage = new myTasks.pages.LoginPage();
       let registerPage = null;
@@ -107,6 +132,12 @@ qx.Class.define("myTasks.Application", {
         },
         this,
       );
+    },
+
+    testExports() {
+      console.log("Testing exports:");
+      console.log("ExcelJS:", window.ExcelJS);
+      console.log("pdfMake:", window.pdfMake);
     },
   },
 });
