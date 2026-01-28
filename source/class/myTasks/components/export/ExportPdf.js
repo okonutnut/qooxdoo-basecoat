@@ -2,7 +2,7 @@ qx.Class.define("myTasks.components.export.ExportPdf", {
   extend: qx.ui.form.Button,
 
   construct(btnText) {
-    this.base(arguments, this.tr(btnText || "Print Preview"));
+    this.base(arguments, this.tr(btnText || "PDF"));
     this.addListener("execute", this._onExport, this);
   },
 
@@ -43,7 +43,12 @@ qx.Class.define("myTasks.components.export.ExportPdf", {
 
         // Always load fonts - vfs_fonts.js sets up the virtual file system
         // Check if fonts are already available
-        if (!window.pdfMake || !window.pdfMake.vfs || !window.pdfMake.fonts || !window.pdfMake.fonts.Roboto) {
+        if (
+          !window.pdfMake ||
+          !window.pdfMake.vfs ||
+          !window.pdfMake.fonts ||
+          !window.pdfMake.fonts.Roboto
+        ) {
           await this._loadScript(
             "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.12/vfs_fonts.js",
           );
@@ -78,7 +83,9 @@ qx.Class.define("myTasks.components.export.ExportPdf", {
         })
         .catch((err) => {
           console.error("PDF preview failed:", err);
-          alert("Failed to generate PDF. Please check the browser console for details.");
+          alert(
+            "Failed to generate PDF. Please check the browser console for details.",
+          );
         });
     },
 
@@ -112,7 +119,7 @@ qx.Class.define("myTasks.components.export.ExportPdf", {
 
       const docDefinition = {
         content: [
-          { text: "Exported Data", style: "header" },
+          { text: "My Tasks", style: "header" },
           {
             table: {
               headerRows: 1,
@@ -136,7 +143,7 @@ qx.Class.define("myTasks.components.export.ExportPdf", {
 
       console.log("Opening print preview...");
       const pdfDoc = pdfMake.createPdf(docDefinition);
-      
+
       // Open PDF in new window for printing
       // Users can use browser's print dialog (Ctrl+P) from the PDF viewer
       pdfDoc.open();
